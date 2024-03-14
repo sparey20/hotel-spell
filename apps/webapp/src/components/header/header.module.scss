@@ -1,0 +1,9 @@
+.header {
+  @apply flex;
+  @apply flex-row;
+  @apply border-b;
+  @apply items-center;
+  @apply justify-between;
+  @apply p-4;
+  height: 60px;
+}
