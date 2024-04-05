@@ -18,10 +18,12 @@ function CustomApp({ Component, pageProps }: AppProps) {
 
   const getHotel = () => {
     axios
-      .get('/api/hotels/fe65e280-e9be-4ba5-8756-00a5fa16b409')
+      .get('/api/hotels/1d7a53dd-b5a6-4efd-9494-7c776c6ea241')
       .then(({ data }: AxiosResponse<IHotel>) => {
+        console.log('data', data);
         dispatch(hotelSlice.actions.updateHotel(data));
-      });
+      })
+      .catch((error) => console.log('error', error));
   };
 
   useEffect(() => {

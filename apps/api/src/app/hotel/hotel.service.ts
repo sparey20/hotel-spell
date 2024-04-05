@@ -1,7 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Hotel } from './hotel.entity';
 import { Repository } from 'typeorm';
+import { User } from '../user/user.entity';
 
 @Injectable()
 export class HotelService {
@@ -12,15 +17,32 @@ export class HotelService {
 
   async findOne(id: string): Promise<any> {
     const hotel = await this.hotelRepository.findOneBy({ id });
-    return 'asdfadsfasdf!';
+
+    if (!hotel) {
+      throw new NotFoundException();
+    }
+
+    return hotel;
   }
 
   async findHotelUsers(id: string) {
-    console.log('here');
-    return this.hotelRepository.findOneBy({ id });
-  }
+    try {
+      const hotel = await this.hotelRepository.findOne({
+        where: {
+          id,
+        },
+        relations: {
+          users: true,
+        },
+      });
 
-  async doSomething() {
-    return 'asdfasdfdsf';
+      if (!hotel) {
+        throw new NotFoundException();
+      }
+
+      return hotel.users;
+    } catch (error) {
+      throw new BadRequestException();
+    }
   }
 }

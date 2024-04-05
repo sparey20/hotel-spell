@@ -7,9 +7,18 @@ export class HotelController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    console.log('blah');
     return this.hotelService.findOne(id);
   }
+
+  @Get(':id/users')
+  findHotelUsers(@Param('id') id: string) {
+    return this.hotelService.findHotelUsers(id);
+  }
+
+  // @Get(':id/reservations')
+  // findHotelReservations(@Param('id') id: string) {
+  //   return this.hotelService.findHotelReservations(id);
+  // }
 
   @Post()
   create(@Body() createHotelDTO) {

@@ -1,3 +1,5 @@
+import { Room } from './../room/room.entity';
+import { Reservation } from './../reservation/reservation.entity';
 import {
   BaseEntity,
   Column,
@@ -5,6 +7,7 @@ import {
   Entity,
   JoinTable,
   ManyToMany,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -39,7 +42,9 @@ export class Hotel extends BaseEntity {
   @UpdateDateColumn()
   updatedDate: string;
 
-  @ManyToMany(() => User)
-  @JoinTable()
+  @OneToMany(() => User, (user) => user.hotel)
   users: User[];
+
+  @OneToMany(() => Room, (room) => room.hotel)
+  rooms: Room[];
 }

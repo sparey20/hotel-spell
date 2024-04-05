@@ -3,17 +3,14 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinColumn,
-  JoinTable,
-  ManyToMany,
-  ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Hotel } from '../hotel/hotel.entity';
+import { Room } from '../room/room.entity';
 
-@Entity({ name: 'User' })
-export class User extends BaseEntity {
+@Entity({ name: 'Guest' })
+export class Guest extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -26,22 +23,9 @@ export class User extends BaseEntity {
   @Column({ name: 'email', type: 'varchar', length: 200, nullable: false })
   email: string;
 
-  @Column({ name: 'username', type: 'varchar', length: 200, nullable: false })
-  username: string;
-
-  @Column({ name: 'password', type: 'varchar', length: 50, nullable: false })
-  password: string;
-
-  @Column({ name: 'admin', type: 'boolean' })
-  admin: boolean;
-
   @CreateDateColumn()
   createdDate: string;
 
   @UpdateDateColumn()
   updatedDate: string;
-
-  @ManyToOne(() => Hotel, (hotel) => hotel.users)
-  @JoinColumn()
-  hotel: Hotel;
 }

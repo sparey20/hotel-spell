@@ -9,4 +9,9 @@ export class UserController {
   findOne(@Param('id') id: string) {
     return this.userService.findOne(id);
   }
+
+  @Get(':id/hotel')
+  findUserHotel(@Param('id') id: string) {
+    return this.userService.findUserHotel(id);
+  }
 }
