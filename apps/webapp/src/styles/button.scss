@@ -1,0 +1,24 @@
+.buttonPrimary {
+  @apply rounded-md;
+  @apply p-2;
+  @apply border;
+  @apply bg-emerald-600;
+  @apply text-white;
+
+  &:hover {
+    @apply bg-emerald-700;
+  }
+}
+
+.buttonDefault {
+  @apply rounded-md;
+  @apply p-2;
+  @apply border;
+  @apply border-emerald-600;
+  @apply text-emerald-600;
+
+  &:hover {
+    @apply bg-emerald-600;
+    @apply text-white;
+  }
+}

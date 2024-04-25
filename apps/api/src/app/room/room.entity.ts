@@ -7,6 +7,7 @@ import {
   JoinTable,
   ManyToMany,
   ManyToOne,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -26,6 +27,6 @@ export class Room extends BaseEntity {
   @JoinColumn()
   hotel: Hotel;
 
-  @OneToOne(() => Reservation, (reservation) => reservation.room)
-  reservation: Reservation;
+  @OneToMany(() => Reservation, (reservation) => reservation.room)
+  reservations: Reservation[];
 }

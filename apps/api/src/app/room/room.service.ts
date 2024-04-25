@@ -20,6 +20,16 @@ export class RoomService {
     return room;
   }
 
+  async findOneByRoomNumber(number: number): Promise<Room> {
+    const room = await this.roomRepository.findOneBy({ number });
+
+    if (!room) {
+      throw new NotFoundException();
+    }
+
+    return room;
+  }
+
   async findHotelReservations(hotelId: string) {
     return this.roomRepository.find({
       where: {

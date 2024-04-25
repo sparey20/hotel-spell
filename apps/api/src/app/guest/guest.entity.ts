@@ -3,11 +3,9 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Room } from '../room/room.entity';
 
 @Entity({ name: 'Guest' })
 export class Guest extends BaseEntity {

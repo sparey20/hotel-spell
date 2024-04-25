@@ -1,0 +1,48 @@
+.modal {
+  .modalBackdrop {
+    @apply fixed;
+    @apply bg-slate-500/30;
+    @apply top-0;
+    @apply left-0;
+    @apply z-10;
+    @apply w-full;
+    @apply h-full;
+    @apply flex;
+    @apply justify-center;
+    @apply items-center;
+
+    .modalContent {
+      @apply w-2/3;
+      @apply h-2/3;
+      @apply rounded-md;
+      @apply border;
+      @apply bg-white;
+      @apply shadow-md;
+      @apply relative;
+      @apply z-50;
+      @apply flex;
+      @apply flex-col;
+
+      .modalHeader {
+        @apply flex;
+        @apply flex-row;
+        @apply justify-between;
+        @apply p-4;
+        @apply border-b;
+      }
+
+      .modalBody {
+        @apply p-4;
+        @apply flex-1;
+      }
+
+      .modalFooter {
+        @apply flex;
+        @apply p-4;
+        @apply border-t;
+        @apply justify-end;
+        @apply gap-2;
+      }
+    }
+  }
+}

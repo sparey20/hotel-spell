@@ -6,6 +6,7 @@ import {
   JoinColumn,
   JoinTable,
   ManyToMany,
+  ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -30,7 +31,7 @@ export class Reservation extends BaseEntity {
   @UpdateDateColumn()
   updatedDate: string;
 
-  @OneToOne(() => Room)
+  @ManyToOne(() => Room)
   @JoinColumn()
   room: Room;
 

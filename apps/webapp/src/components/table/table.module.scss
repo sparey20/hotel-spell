@@ -1,2 +1,20 @@
 .table {
+  .headerContainer {
+    @apply grid;
+    @apply h-12;
+    @apply content-center;
+    @apply p-3;
+    @apply bg-slate-50;
+    @apply border-b;
+  }
+
+  .rowContainer {
+    .rowItem {
+      @apply grid;
+      @apply h-14;
+      @apply content-center;
+      @apply p-3;
+      @apply border-b;
+    }
+  }
 }

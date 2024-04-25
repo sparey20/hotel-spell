@@ -6,7 +6,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Hotel } from './hotel.entity';
 import { Repository } from 'typeorm';
-import { User } from '../user/user.entity';
 
 @Injectable()
 export class HotelService {

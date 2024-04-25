@@ -14,14 +14,4 @@ export class HotelController {
   findHotelUsers(@Param('id') id: string) {
     return this.hotelService.findHotelUsers(id);
   }
-
-  // @Get(':id/reservations')
-  // findHotelReservations(@Param('id') id: string) {
-  //   return this.hotelService.findHotelReservations(id);
-  // }
-
-  @Post()
-  create(@Body() createHotelDTO) {
-    // return this.hotelService.create(createHotelDTO);
-  }
 }
