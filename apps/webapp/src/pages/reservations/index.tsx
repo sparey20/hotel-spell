@@ -1,104 +1,116 @@
 import {
   ICreateReservationDTO,
+  IHotel,
   IReservation,
 } from '@hotel-spell/api-interfaces';
 import axios, { AxiosResponse } from 'axios';
 import { useEffect, useReducer, useState } from 'react';
 import styles from './index.module.scss';
 import Table from '../../components/table/table';
-import { ITableColumn } from '../../components/table/interfaces';
 import Modal from '../../components/modal/modal';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useAppSelector } from '../../lib/hooks';
-import { IHotel } from 'libs/api-interfaces/src';
+import { RESERVATION_COLUMNS } from './constants';
+import { ReservationActionsTypes } from './enums';
+import {
+  ReservationAction,
+  ReservationState,
+  ReservationTableItem,
+} from './types';
 
 /* eslint-disable-next-line */
 type DashboardProps = {};
 
-type ReservationTableItem = {
-  id: string;
-  guestFirstName: string;
-  guestLastName: string;
-  roomNumber: number;
-  checkInDate: string;
-  checkOutDate: string;
-};
+const reservationActionMap = new Map<
+  ReservationActionsTypes,
+  (state: ReservationState, action: ReservationAction) => ReservationState
+>([
+  [
+    ReservationActionsTypes.ReservationFetchInit,
+    (state: ReservationState, action: ReservationAction) => ({
+      ...state,
+      loading: true,
+      error: false,
+    }),
+  ],
+  [
+    ReservationActionsTypes.ReservationFetchFailure,
+    (state: ReservationState, action: ReservationAction) => ({
+      ...state,
+      loading: false,
+      error: true,
+    }),
+  ],
+  [
+    ReservationActionsTypes.ReservationFetchSuccess,
+    (state: ReservationState, action: ReservationAction) => action.payload,
+  ],
+  [
+    ReservationActionsTypes.AddReservation,
+    (state: ReservationState, action: ReservationAction) =>
+      ({
+        ...state,
+        loading: false,
+        data: [...(state.data as ReservationTableItem[]), action.payload.data],
+      } as ReservationState),
+  ],
+  [
+    ReservationActionsTypes.ReservationUpdateInit,
+    (state: ReservationState, action: ReservationAction) =>
+      ({
+        ...state,
+        loading: true,
+      } as ReservationState),
+  ],
+]);
 
 const reservationsReducer = (
-  state: ReservationTableItem[],
-  action: { type: string; payload: any }
-) => {
-  switch (action.type) {
-    case 'SET_RESERVATIONS':
-      return action.payload;
-    case 'ADD_RESERVATION':
-      return [...state, action.payload as ReservationTableItem];
-    default:
-      throw new Error();
-  }
+  state: ReservationState,
+  action: ReservationAction
+): ReservationState => {
+  const mappedAction = reservationActionMap.get(action.type);
+
+  return mappedAction ? mappedAction(state, action) : state;
 };
 
-const columns: ITableColumn[] = [
-  {
-    sortable: false,
-    label: 'First Name',
-    key: 'guestFirstName',
-    size: 2,
-  },
-  {
-    sortable: false,
-    label: 'Last Name',
-    key: 'guestLastName',
-    size: 2,
-  },
-  {
-    sortable: false,
-    label: 'Check In',
-    key: 'checkInDate',
-    size: 2,
-  },
-  {
-    sortable: false,
-    label: 'Check Out',
-    key: 'checkOutDate',
-    size: 2,
-  },
-  {
-    sortable: false,
-    label: 'Room',
-    key: 'roomNumber',
-    size: 2,
-  },
-];
-
 export default function Dashboard(props: DashboardProps) {
-  const { hotel } = useAppSelector((state) => state.hotel);
+  const { hotel } = useAppSelector((state) => state.hotel) as {
+    hotel: IHotel | null;
+  };
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const [reservations, dispatchReservations] = useReducer(reservationsReducer, {
+    loading: true,
+    error: false,
+    data: [],
+  });
 
   const getReservations = () => {
     axios
-      .get(`/api/reservations?hotel=${(hotel as any)?.id}`)
+      .get(`/api/reservations?hotel=${hotel?.id}`)
       .then(({ data }: AxiosResponse<IReservation[]>) => {
         dispatchReservations({
-          type: 'SET_RESERVATIONS',
-          payload: data.map((reservation) => ({
-            id: reservation.id,
-            checkInDate: reservation.checkInDate,
-            checkOutDate: reservation.checkOutDate,
-            guestFirstName: reservation.guest.firstName,
-            guestLastName: reservation.guest.lastName,
-            roomNumber: reservation.room.number,
-          })),
+          type: ReservationActionsTypes.ReservationFetchSuccess,
+          payload: {
+            loading: false,
+            error: false,
+            data: data.map((reservation) => ({
+              id: reservation.id,
+              checkInDate: reservation.checkInDate,
+              checkOutDate: reservation.checkOutDate,
+              guestFirstName: reservation.guest.firstName,
+              guestLastName: reservation.guest.lastName,
+              roomNumber: reservation.room.number,
+            })),
+          },
         });
       })
-      .catch((error) => console.log('error', error));
+      .catch((error) => {
+        dispatchReservations({
+          type: ReservationActionsTypes.ReservationFetchFailure,
+          payload: reservations,
+        });
+      });
   };
-
-  const [reservations, dispatchReservations] = useReducer(
-    reservationsReducer,
-    []
-  );
-
   const openCreateReservationModal = () => {
     setIsModalVisible(true);
   };
@@ -114,19 +126,28 @@ export default function Dashboard(props: DashboardProps) {
   ) => {
     reset();
     closeCreateReservationModal();
+
+    dispatchReservations({
+      type: ReservationActionsTypes.ReservationUpdateInit,
+      payload: reservations,
+    });
+
     axios
       .post('/api/reservations', reservation)
       .then(({ data }: AxiosResponse<IReservation>) => {
         const { id, guest, room, checkInDate, checkOutDate } = data;
         dispatchReservations({
-          type: 'ADD_RESERVATION',
+          type: ReservationActionsTypes.AddReservation,
           payload: {
-            id,
-            guestFirstName: guest.firstName,
-            guestLastName: guest.lastName,
-            roomNumber: room.number,
-            checkInDate,
-            checkOutDate,
+            ...reservations,
+            data: {
+              id,
+              guestFirstName: guest.firstName,
+              guestLastName: guest.lastName,
+              roomNumber: room.number,
+              checkInDate,
+              checkOutDate,
+            },
           },
         });
       })
@@ -192,7 +213,16 @@ export default function Dashboard(props: DashboardProps) {
           </Modal>
         )}
       </div>
-      <Table items={reservations} idKey="id" columns={columns}></Table>
+
+      {reservations.loading ? (
+        <div>loading...</div>
+      ) : (
+        <Table
+          items={reservations.data as ReservationTableItem[]}
+          idKey="id"
+          columns={RESERVATION_COLUMNS}
+        ></Table>
+      )}
     </section>
   );
 }

@@ -19,7 +19,7 @@ function CustomApp({ Component, pageProps }: AppProps) {
   const getHotel = () => {
     axios
       .get('/api/hotels')
-      .then(({ data }: AxiosResponse<IHotel>) => {
+      .then(({ data }: AxiosResponse<IHotel[]>) => {
         dispatch(hotelSlice.actions.updateHotel(data[0]));
       })
       .catch((error) => console.log('error', error));
