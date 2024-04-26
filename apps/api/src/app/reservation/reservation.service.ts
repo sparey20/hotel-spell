@@ -31,13 +31,13 @@ export class ReservationService {
     return reservation;
   }
 
-  async findAll() {
+  async findAll(hotelId: string) {
     try {
       const reservations = await this.reservationRepository.find({
         where: {
           room: {
             hotel: {
-              id: '1d7a53dd-b5a6-4efd-9494-7c776c6ea241',
+              id: hotelId,
             },
           },
         },

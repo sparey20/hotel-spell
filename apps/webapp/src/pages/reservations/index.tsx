@@ -9,6 +9,8 @@ import Table from '../../components/table/table';
 import { ITableColumn } from '../../components/table/interfaces';
 import Modal from '../../components/modal/modal';
 import { SubmitHandler, useForm } from 'react-hook-form';
+import { useAppSelector } from '../../lib/hooks';
+import { IHotel } from 'libs/api-interfaces/src';
 
 /* eslint-disable-next-line */
 type DashboardProps = {};
@@ -70,11 +72,12 @@ const columns: ITableColumn[] = [
 ];
 
 export default function Dashboard(props: DashboardProps) {
+  const { hotel } = useAppSelector((state) => state.hotel);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
 
   const getReservations = () => {
     axios
-      .get('/api/reservations')
+      .get(`/api/reservations?hotel=${(hotel as any)?.id}`)
       .then(({ data }: AxiosResponse<IReservation[]>) => {
         dispatchReservations({
           type: 'SET_RESERVATIONS',

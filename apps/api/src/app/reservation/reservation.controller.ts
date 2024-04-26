@@ -7,8 +7,8 @@ export class ReservationController {
   constructor(private reservationService: ReservationService) {}
 
   @Get()
-  findAll() {
-    return this.reservationService.findAll();
+  findAll(@Param('hotel') hotelId: string) {
+    return this.reservationService.findAll(hotelId);
   }
 
   @Post()
