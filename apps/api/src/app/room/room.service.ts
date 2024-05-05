@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Room } from './room.entity';
@@ -13,6 +17,16 @@ export class RoomService {
     private readonly roomRepository: Repository<Room>,
     private hotelService: HotelService
   ) {}
+
+  async findAll(hotelId: string): Promise<Room[]> {
+    return this.roomRepository.find({
+      where: {
+        hotel: {
+          id: hotelId,
+        },
+      },
+    });
+  }
 
   async findOne(id: string): Promise<Room> {
     const room = await this.roomRepository.findOneBy({ id });
@@ -34,19 +48,8 @@ export class RoomService {
     return room;
   }
 
-  async findHotelReservations(hotelId: string) {
-    return this.roomRepository.find({
-      where: {
-        hotel: {
-          id: hotelId,
-        },
-      },
-      relations: ['reservation'],
-    });
-  }
-
   async create(createRoomDto: CreateRoomDto) {
-    const {number, hotelId} = createRoomDto;
+    const { number, hotelId } = createRoomDto;
 
     let hotel = null;
 
@@ -55,7 +58,6 @@ export class RoomService {
     } catch (error) {
       throw new BadRequestException('Hotel not found');
     }
-
 
     const room = new Room();
 

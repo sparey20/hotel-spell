@@ -10,7 +10,6 @@ export default function Header() {
       <div className="flex-row flex gap-2 justify-center items-center">
         <LuWand2 color="#047857" />
         <h3 className="text-emerald-900 font-bold text-lg">Hotel Spell</h3>
-        <p>{hotel?.['name']}</p>
       </div>
       <div className="flex flex-row">User Menu</div>
     </section>

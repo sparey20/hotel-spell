@@ -1,3 +1,4 @@
+import { IRoom } from '@hotel-spell/api-interfaces';
 import { ReservationActionsTypes } from './enums';
 
 export type ReservationTableItem = {
@@ -14,8 +15,13 @@ export type ReservationAction = {
   payload: ReservationState;
 };
 
+export type ReservationStateData = {
+  reservations: ReservationTableItem[] | ReservationTableItem;
+  rooms: IRoom[];
+};
+
 export type ReservationState = {
   loading: boolean;
   error: boolean;
-  data: ReservationTableItem[] | ReservationTableItem;
+  data: ReservationStateData;
 };

@@ -4,7 +4,8 @@
     @apply h-12;
     @apply content-center;
     @apply p-3;
-    @apply bg-emerald-50;
+    @apply bg-slate-50;
+    @apply text-slate-500;
     @apply border-y;
   }
 
@@ -15,6 +16,38 @@
       @apply content-center;
       @apply p-3;
       @apply border-b;
+
+      &:hover {
+        @apply bg-slate-100;
+      }
+
+      &.selected {
+        @apply bg-emerald-50;
+      }
+    }
+  }
+  .checkBox {
+    @apply border;
+    @apply rounded;
+    @apply w-4;
+    @apply border-emerald-300;
+  }
+
+  .moreOptions {
+    .moreOptionsButton {
+      @apply p-2;
+      @apply rounded-full;
+
+      &:hover {
+        @apply bg-slate-200;
+      }
+    }
+    .moreOptionsDropdown {
+      @apply hidden;
+      @apply p-2;
+      @apply rounded;
+      @apply border;
+      @apply bg-slate-200;
     }
   }
 }

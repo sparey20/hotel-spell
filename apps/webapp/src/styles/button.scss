@@ -1,12 +1,12 @@
 .buttonPrimary {
   @apply rounded-md;
-  @apply p-2;
+  @apply p-3;
   @apply border;
-  @apply bg-emerald-600;
+  @apply bg-emerald-700;
   @apply text-white;
 
   &:hover {
-    @apply bg-emerald-700;
+    @apply bg-emerald-900;
   }
 }
 
@@ -20,5 +20,14 @@
   &:hover {
     @apply bg-emerald-600;
     @apply text-white;
+  }
+}
+
+.buttonIcon {
+  @apply rounded-full;
+  @apply p-1;
+
+  &:hover {
+    @apply bg-slate-100;
   }
 }

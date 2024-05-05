@@ -4,11 +4,18 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  LessThan,
+  LessThanOrEqual,
+  MoreThan,
+  MoreThanOrEqual,
+  Repository,
+} from 'typeorm';
 import { Reservation } from './reservation.entity';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { GuestService } from '../guest/guest.service';
 import { RoomService } from '../room/room.service';
+import { format } from 'date-fns';
 
 @Injectable()
 export class ReservationService {
@@ -31,7 +38,21 @@ export class ReservationService {
     return reservation;
   }
 
-  async findAll(hotelId: string) {
+  async findAll(
+    reservationParams: {
+      hotelId: string;
+      checkInDate?: string;
+      checkOutDate?: string;
+      isActive?: boolean;
+    } = { hotelId: null, checkInDate: '', checkOutDate: '', isActive: false }
+  ) {
+    const { hotelId, isActive, checkInDate, checkOutDate } = reservationParams;
+    const today = format(new Date(), 'P');
+
+    if (!hotelId) {
+      throw new BadRequestException('No hotel provided');
+    }
+
     try {
       const reservations = await this.reservationRepository.find({
         where: {
@@ -40,6 +61,16 @@ export class ReservationService {
               id: hotelId,
             },
           },
+          ...(isActive || (!isActive && !checkInDate)
+            ? {}
+            : { checkInDate: MoreThanOrEqual(checkInDate) }),
+          ...(!isActive && !checkOutDate
+            ? {}
+            : {
+                checkOutDate: isActive
+                  ? MoreThanOrEqual(today)
+                  : LessThanOrEqual(checkOutDate),
+              }),
         },
         relations: {
           room: true,

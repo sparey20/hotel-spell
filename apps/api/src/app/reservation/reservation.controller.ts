@@ -7,8 +7,18 @@ export class ReservationController {
   constructor(private reservationService: ReservationService) {}
 
   @Get()
-  findAll(@Param('hotel') hotelId: string) {
-    return this.reservationService.findAll(hotelId);
+  findAll(
+    @Query('hotel') hotelId: string,
+    @Query('checkInDate') checkInDate: string,
+    @Query('checkOutDate') checkOutDate: string,
+    @Query('isActive') isActive: boolean
+  ) {
+    return this.reservationService.findAll({
+      hotelId: hotelId ?? null,
+      checkInDate: checkInDate ?? null,
+      checkOutDate: checkOutDate ?? null,
+      isActive: isActive ?? false,
+    });
   }
 
   @Post()

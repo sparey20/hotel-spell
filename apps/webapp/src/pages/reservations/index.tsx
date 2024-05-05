@@ -2,6 +2,7 @@ import {
   ICreateReservationDTO,
   IHotel,
   IReservation,
+  IRoom,
 } from '@hotel-spell/api-interfaces';
 import axios, { AxiosResponse } from 'axios';
 import { useEffect, useReducer, useState } from 'react';
@@ -12,6 +13,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { useAppSelector } from '../../lib/hooks';
 import { RESERVATION_COLUMNS } from './constants';
 import { ReservationActionsTypes } from './enums';
+import { format } from 'date-fns';
 import {
   ReservationAction,
   ReservationState,
@@ -21,6 +23,7 @@ import {
 /* eslint-disable-next-line */
 type DashboardProps = {};
 
+const today = format(new Date(), 'yyyy-MM-dd');
 const reservationActionMap = new Map<
   ReservationActionsTypes,
   (state: ReservationState, action: ReservationAction) => ReservationState
@@ -51,7 +54,13 @@ const reservationActionMap = new Map<
       ({
         ...state,
         loading: false,
-        data: [...(state.data as ReservationTableItem[]), action.payload.data],
+        data: {
+          ...action.payload.data,
+          reservations: [
+            ...(state.data.reservations as ReservationTableItem[]),
+            action.payload.data.reservations,
+          ],
+        },
       } as ReservationState),
   ],
   [
@@ -78,40 +87,65 @@ export default function Dashboard(props: DashboardProps) {
     hotel: IHotel | null;
   };
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
-  const [reservations, dispatchReservations] = useReducer(reservationsReducer, {
-    loading: true,
-    error: false,
-    data: [],
-  });
+  const [reservationPage, dispatchReservations] = useReducer(
+    reservationsReducer,
+    {
+      loading: true,
+      error: false,
+      data: {
+        reservations: [],
+        rooms: [],
+      },
+    }
+  );
 
-  const getReservations = () => {
+  const getPageData = () => {
     axios
-      .get(`/api/reservations?hotel=${hotel?.id}`)
-      .then(({ data }: AxiosResponse<IReservation[]>) => {
-        dispatchReservations({
-          type: ReservationActionsTypes.ReservationFetchSuccess,
-          payload: {
-            loading: false,
-            error: false,
-            data: data.map((reservation) => ({
-              id: reservation.id,
-              checkInDate: reservation.checkInDate,
-              checkOutDate: reservation.checkOutDate,
-              guestFirstName: reservation.guest.firstName,
-              guestLastName: reservation.guest.lastName,
-              roomNumber: reservation.room.number,
-            })),
+      .all([
+        axios.get(`/api/reservations`, {
+          params: {
+            hotel: hotel?.id,
           },
-        });
-      })
-      .catch((error) => {
-        dispatchReservations({
-          type: ReservationActionsTypes.ReservationFetchFailure,
-          payload: reservations,
-        });
-      });
+        }),
+        axios.get(`/api/rooms`, {
+          params: {
+            hotel: hotel?.id,
+          },
+        }),
+      ])
+      .then(
+        axios.spread((reservationResponse, roomsResponse) => {
+          dispatchReservations({
+            type: ReservationActionsTypes.ReservationFetchSuccess,
+            payload: {
+              loading: false,
+              error: false,
+              data: {
+                reservations: reservationResponse.data.map(
+                  (reservation: IReservation) => ({
+                    id: reservation.id,
+                    checkInDate: reservation.checkInDate,
+                    checkOutDate: reservation.checkOutDate,
+                    guestFirstName: reservation.guest.firstName,
+                    guestLastName: reservation.guest.lastName,
+                    roomNumber: reservation.room.number,
+                  })
+                ),
+                rooms: roomsResponse.data,
+              },
+            },
+          });
+        })
+      );
   };
-  const openCreateReservationModal = () => {
+
+  const openReservationModal = (formData: any = null) => {
+    if (!formData) {
+      reset();
+    } else {
+      reset(formData);
+    }
+
     setIsModalVisible(true);
   };
 
@@ -119,17 +153,35 @@ export default function Dashboard(props: DashboardProps) {
     setIsModalVisible(false);
   };
 
-  const { register, handleSubmit, reset } = useForm<ICreateReservationDTO>();
+  const { register, handleSubmit, reset, getValues, trigger, formState } =
+    useForm<ICreateReservationDTO>({
+      mode: 'onBlur',
+    });
+
+  const reservationTableActions = [
+    {
+      label: 'Edit',
+      action: (item: any) => {
+        openReservationModal({
+          firstName: item.guestFirstName,
+          lastName: item.guestLastName,
+          email: '',
+          roomNumber: item.roomNumber,
+          checkInDate: item.checkInDate,
+          checkOutDate: item.checkOutDate,
+        });
+      },
+    },
+  ];
 
   const createReservation: SubmitHandler<ICreateReservationDTO> = (
     reservation: ICreateReservationDTO
   ) => {
-    reset();
     closeCreateReservationModal();
 
     dispatchReservations({
       type: ReservationActionsTypes.ReservationUpdateInit,
-      payload: reservations,
+      payload: reservationPage,
     });
 
     axios
@@ -139,14 +191,17 @@ export default function Dashboard(props: DashboardProps) {
         dispatchReservations({
           type: ReservationActionsTypes.AddReservation,
           payload: {
-            ...reservations,
+            ...reservationPage,
             data: {
-              id,
-              guestFirstName: guest.firstName,
-              guestLastName: guest.lastName,
-              roomNumber: room.number,
-              checkInDate,
-              checkOutDate,
+              ...reservationPage.data,
+              reservations: {
+                id,
+                guestFirstName: guest.firstName,
+                guestLastName: guest.lastName,
+                roomNumber: room.number,
+                checkInDate,
+                checkOutDate,
+              },
             },
           },
         });
@@ -155,72 +210,113 @@ export default function Dashboard(props: DashboardProps) {
   };
 
   useEffect(() => {
-    getReservations();
+    if (formState.isSubmitSuccessful) {
+      reset();
+    }
+  }, [formState]);
+
+  useEffect(() => {
+    getPageData();
   }, []);
 
   return (
     <section className={styles.reservations}>
-      <div className="flex flex-row p-2 justify-end">
-        <button className="buttonPrimary" onClick={openCreateReservationModal}>
-          Create
-        </button>
-        {isModalVisible && (
-          <Modal
-            header="Create Reservation"
-            onClose={closeCreateReservationModal}
-            onConfirm={handleSubmit(createReservation)}
-          >
-            <section className="flex flex-col">
-              <form className="flex flex-col gap-4">
-                <input
-                  className="formInput"
-                  type="text"
-                  placeholder="First Name"
-                  {...register('firstName')}
-                />
-                <input
-                  className="formInput"
-                  type="text"
-                  placeholder="Last Name"
-                  {...register('lastName')}
-                />
-                <input
-                  className="formInput"
-                  type="text"
-                  placeholder="Email"
-                  {...register('email')}
-                />
-                <input
-                  className="formInput"
-                  type="text"
-                  placeholder="Room Number"
-                  {...register('roomNumber')}
-                />
-                <label>Check In Date</label>
-                <input
-                  className="formInput"
-                  type="date"
-                  {...register('checkInDate')}
-                />
-                <label>Check Out Date</label>
-                <input
-                  className="formInput"
-                  type="date"
-                  {...register('checkOutDate')}
-                />
-              </form>
-            </section>
-          </Modal>
-        )}
-      </div>
+      <section className={styles.header}>
+        <h1 className={styles.title}>Reservations</h1>
+        <div className="flex flex-row p-2 justify-end">
+          <button className="buttonPrimary" onClick={openReservationModal}>
+            Create Reservation
+          </button>
+          {isModalVisible && (
+            <Modal
+              header="Create or Edit a Reservation"
+              onClose={closeCreateReservationModal}
+              onConfirm={handleSubmit(createReservation)}
+            >
+              <section className="flex flex-col">
+                <form className="flex flex-col gap-4">
+                  <input
+                    className={`formInput ${
+                      formState.errors.firstName ? 'error' : ''
+                    }`}
+                    type="text"
+                    placeholder="First Name *"
+                    {...register('firstName', { required: true })}
+                  />
+                  <input
+                    className={`formInput ${
+                      formState.errors.lastName ? 'error' : ''
+                    }`}
+                    type="text"
+                    placeholder="Last Name *"
+                    {...register('lastName', { required: true })}
+                  />
+                  <input
+                    className={`formInput ${
+                      formState.errors.email ? 'error' : ''
+                    }`}
+                    type="text"
+                    placeholder="Email *"
+                    {...register('email', {
+                      required: true,
+                      pattern: /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/g,
+                    })}
+                  />
+                  <select
+                    className={`formInput ${
+                      formState.errors.roomNumber ? 'error' : ''
+                    }`}
+                    {...register('roomNumber', { required: true })}
+                  >
+                    <option disabled>Room Number *</option>
+                    {reservationPage.data.rooms.map((room) => (
+                      <option key={room.id} value={room.number}>
+                        {room.number}
+                      </option>
+                    ))}
+                  </select>
+                  <label>Check In Date</label>
+                  <input
+                    className={`formInput ${
+                      formState.errors.checkInDate ? 'error' : ''
+                    }`}
+                    type="date"
+                    min={today}
+                    {...register('checkInDate', { required: true, min: today })}
+                    aria-invalid={
+                      formState.errors.checkInDate ? 'true' : 'false'
+                    }
+                    onInput={() => {
+                      trigger('checkOutDate');
+                    }}
+                  />
+                  <label>Check Out Date</label>
+                  <input
+                    className={`formInput ${
+                      formState.errors.checkOutDate ? 'error' : ''
+                    }`}
+                    type="date"
+                    min={getValues('checkInDate')}
+                    {...register('checkOutDate', {
+                      required: true,
+                      min: getValues('checkInDate'),
+                    })}
+                  />
+                </form>
+              </section>
+            </Modal>
+          )}
+        </div>
+      </section>
 
-      {reservations.loading ? (
+      {reservationPage.loading ? (
         <div>loading...</div>
       ) : (
         <Table
-          items={reservations.data as ReservationTableItem[]}
+          items={reservationPage.data.reservations as ReservationTableItem[]}
           idKey="id"
           columns={RESERVATION_COLUMNS}
+          itemActions={reservationTableActions}
         ></Table>
       )}
     </section>

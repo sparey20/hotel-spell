@@ -1,3 +1,13 @@
 .reservations {
   @apply w-full;
+
+  .header {
+    @apply p-4;
+    @apply pt-8;
+
+    .title {
+      @apply text-2xl;
+      @apply font-bold;
+    }
+  }
 }

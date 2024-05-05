@@ -3,9 +3,11 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Reservation } from '../reservation/reservation.entity';
 
 @Entity({ name: 'Guest' })
 export class Guest extends BaseEntity {
@@ -26,4 +28,7 @@ export class Guest extends BaseEntity {
 
   @UpdateDateColumn()
   updatedDate: string;
+
+  @OneToOne(() => Reservation, (reservation) => reservation.guest)
+  reservation: Reservation;
 }

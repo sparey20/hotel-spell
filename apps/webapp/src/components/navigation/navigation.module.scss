@@ -2,9 +2,22 @@
   width: 250px;
   @apply bg-emerald-900;
   @apply text-white;
-  @apply p-3;
+  @apply pt-6;
   @apply h-full;
   @apply shadow;
   @apply flex;
   @apply flex-col;
+  @apply gap-5;
+
+  .link {
+    @apply p-3;
+
+    &:hover {
+      @apply text-emerald-400;
+      @apply bg-emerald-800;
+    }
+
+    &.selected {
+    }
+  }
 }

@@ -6,14 +6,14 @@ import { CreateRoomDto } from './dto/create-room.dto';
 export class RoomController {
   constructor(private roomService: RoomService) {}
 
+  @Get()
+  findAll(@Query('hotel') hotelId: string) {
+    return this.roomService.findAll(hotelId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.roomService.findOne(id);
-  }
-
-  @Get(':id/reservations')
-  findReservations(@Param('id') id: string) {
-    return this.roomService.findHotelReservations(id);
   }
 
   @Post()

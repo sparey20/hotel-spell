@@ -23,7 +23,7 @@ export default function Modal({
         >
           <header className={styles.modalHeader}>
             <h3>{header}</h3>
-            <button onClick={onClose}>
+            <button className="buttonIcon" onClick={onClose}>
               <IoCloseOutline className="text-xl" />
             </button>
           </header>

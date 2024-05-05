@@ -1,12 +1,19 @@
 .formInput {
   @apply border;
   @apply rounded;
-  @apply border-emerald-600;
-  @apply p-1;
-  @apply placeholder:text-emerald-900;
-  @apply focus:outline-2;
-  @apply focus:border-none;
-  @apply focus:outline-emerald-500;
+  @apply bg-slate-50;
+  @apply border-slate-400;
+  @apply p-2;
+  @apply placeholder:text-slate-600;
+  @apply focus:outline-none;
+  @apply focus:border-emerald-500;
+  @apply focus:border-2;
   @apply focus:ring-0;
   @apply h-10;
+
+  &.error {
+    @apply border-red-400;
+    @apply text-red-600;
+    @apply placeholder:text-red-600;
+  }
 }

@@ -5,6 +5,17 @@ import { GuestService } from './guest.service';
 export class GuestController {
   constructor(private guestService: GuestService) {}
 
+  @Get()
+  findAll(
+    @Query('hotel') hotelId: string,
+    @Query('isActive') isActive: boolean
+  ) {
+    return this.guestService.findAll({
+      hotelId: hotelId ?? null,
+      isActive: isActive ?? false,
+    });
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.guestService.findOne(id);
