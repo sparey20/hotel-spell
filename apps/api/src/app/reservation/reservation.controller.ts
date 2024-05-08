@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ReservationService } from './reservation.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 
@@ -33,5 +33,10 @@ export class ReservationController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.reservationService.findOne(id);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateReservationDto: CreateReservationDto) {
+    return this.reservationService.update(id, updateReservationDto)
   }
 }

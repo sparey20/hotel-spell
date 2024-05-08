@@ -25,3 +25,13 @@ export type ReservationState = {
   error: boolean;
   data: ReservationStateData;
 };
+
+export type ReservationModalFormInputs = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  roomNumber: number;
+  checkInDate: string;
+  checkOutDate: string;
+  id: string;
+}

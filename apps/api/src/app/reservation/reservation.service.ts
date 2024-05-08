@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+  EntityManager,
   ILike,
   LessThan,
   LessThanOrEqual,
@@ -16,13 +17,15 @@ import { Reservation } from './reservation.entity';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { GuestService } from '../guest/guest.service';
 import { RoomService } from '../room/room.service';
-import { format } from 'date-fns';
+import { format, isBefore } from 'date-fns';
+import { Guest } from '../guest/guest.entity';
 
 @Injectable()
 export class ReservationService {
   constructor(
     @InjectRepository(Reservation)
     private readonly reservationRepository: Repository<Reservation>,
+    private entityManager: EntityManager,
     private guestService: GuestService,
     private roomService: RoomService
   ) {}
@@ -142,5 +145,44 @@ export class ReservationService {
     reservation.checkOutDate = checkOutDate;
 
     return this.reservationRepository.save(reservation);
+  }
+
+  async update(reservationId: string, updateUserDto: CreateReservationDto) {
+    const today = format(new Date(), 'P');
+    const {
+      email,
+      firstName,
+      lastName,
+      roomNumber,
+      checkInDate,
+      checkOutDate,
+    } = updateUserDto;
+
+    if (isBefore(checkInDate, today)) {
+      throw new BadRequestException('Cannot set check in date in the past');
+    }
+
+    const reservation = await this.findOne(reservationId);
+
+    if (!reservation) {
+      throw new NotFoundException('Reservation not found');
+    }
+
+    const guest = reservation.guest;
+
+    guest.firstName = firstName;
+    guest.lastName = lastName;
+    guest.email = email;
+    reservation.room.number = roomNumber;
+    reservation.checkInDate = checkInDate;
+    reservation.checkOutDate = checkOutDate;
+
+
+    await this.entityManager.transaction(async (transactionEntityManager) => {
+      await transactionEntityManager.save(guest);
+      await transactionEntityManager.save(reservation);
+
+      return reservation;
+    })
   }
 }

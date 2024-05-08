@@ -16,6 +16,7 @@ import { ReservationActionsTypes } from './enums';
 import { format } from 'date-fns';
 import {
   ReservationAction,
+  ReservationModalFormInputs,
   ReservationState,
   ReservationTableItem,
 } from './types';
@@ -155,7 +156,7 @@ export default function Reservations(props: ReservationProps) {
   };
 
   const { register, handleSubmit, reset, getValues, trigger, formState } =
-    useForm<ICreateReservationDTO>({
+    useForm<ReservationModalFormInputs>({
       mode: 'onBlur',
     });
 
@@ -163,7 +164,9 @@ export default function Reservations(props: ReservationProps) {
     {
       label: 'Edit',
       action: (item: any) => {
+        console.log('item', item);
         openReservationModal({
+          id: item.id,
           firstName: item.guestFirstName,
           lastName: item.guestLastName,
           email: '',
@@ -207,41 +210,43 @@ export default function Reservations(props: ReservationProps) {
       });
   };
 
-  const createReservation: SubmitHandler<ICreateReservationDTO> = (
-    reservation: ICreateReservationDTO
+  const createEditReservation: SubmitHandler<ReservationModalFormInputs> = (
+    reservationForm: ReservationModalFormInputs
   ) => {
     closeCreateReservationModal();
 
-    // dispatchReservations({
-    //   type: ReservationActionsTypes.ReservationUpdateInit,
-    //   payload: reservationPage,
-    // });
+    dispatchReservations({
+      type: ReservationActionsTypes.ReservationUpdateInit,
+      payload: reservationPage,
+    });
 
-    console.log('here', reservation);
+    console.log('here', reservationForm);
 
-    axios
-      .post('/api/reservations', reservation)
-      .then(({ data }: AxiosResponse<IReservation>) => {
-        const { id, guest, room, checkInDate, checkOutDate } = data;
-        dispatchReservations({
-          type: ReservationActionsTypes.AddReservation,
-          payload: {
-            ...reservationPage,
-            data: {
-              ...reservationPage.data,
-              reservations: {
-                id,
-                guestFirstName: guest.firstName,
-                guestLastName: guest.lastName,
-                roomNumber: room.number,
-                checkInDate,
-                checkOutDate,
+    if (!reservationForm.id) {
+        axios
+          .post('/api/reservations', reservationForm)
+          .then(({ data }: AxiosResponse<IReservation>) => {
+            const { id, guest, room, checkInDate, checkOutDate } = data;
+            dispatchReservations({
+              type: ReservationActionsTypes.AddReservation,
+              payload: {
+                ...reservationPage,
+                data: {
+                  ...reservationPage.data,
+                  reservations: {
+                    id,
+                    guestFirstName: guest.firstName,
+                    guestLastName: guest.lastName,
+                    roomNumber: room.number,
+                    checkInDate,
+                    checkOutDate,
+                  },
+                },
               },
-            },
-          },
-        });
-      })
-      .catch((error) => console.log('error', error));
+            });
+          })
+          .catch((error) => console.log('error', error));
+    }
   };
 
   useEffect(() => {
@@ -262,14 +267,14 @@ export default function Reservations(props: ReservationProps) {
           <div className="flex-1 h-full">
             <Search onSearch={searchHandler}></Search>
           </div>
-          <button className="buttonPrimary" onClick={openReservationModal}>
+          <button className="buttonPrimary" onClick={() => openReservationModal()}>
             Create Reservation
           </button>
           {isModalVisible && (
             <Modal
               header="Create or Edit a Reservation"
               onClose={closeCreateReservationModal}
-              onConfirm={handleSubmit(createReservation)}
+              onConfirm={handleSubmit(createEditReservation)}
             >
               <section className="flex flex-col">
                 <form className="flex flex-col gap-4">
@@ -320,7 +325,7 @@ export default function Reservations(props: ReservationProps) {
                     }`}
                     type="date"
                     min={today}
-                    {...register('checkInDate', { required: true, min: today })}
+                    {...register('checkInDate', { required: true, min: today, disabled: getValues('id') ? true: false })}
                     aria-invalid={
                       formState.errors.checkInDate ? 'true' : 'false'
                     }
@@ -340,6 +345,7 @@ export default function Reservations(props: ReservationProps) {
                       min: getValues('checkInDate'),
                     })}
                   />
+                  <input type="hidden" {...register('id')}/>
                 </form>
               </section>
             </Modal>
