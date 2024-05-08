@@ -19,9 +19,10 @@ import {
   ReservationState,
   ReservationTableItem,
 } from './types';
+import Search from '../../components/search/search';
 
 /* eslint-disable-next-line */
-type DashboardProps = {};
+type ReservationProps = {};
 
 const today = format(new Date(), 'yyyy-MM-dd');
 const reservationActionMap = new Map<
@@ -82,7 +83,7 @@ const reservationsReducer = (
   return mappedAction ? mappedAction(state, action) : state;
 };
 
-export default function Dashboard(props: DashboardProps) {
+export default function Reservations(props: ReservationProps) {
   const { hotel } = useAppSelector((state) => state.hotel) as {
     hotel: IHotel | null;
   };
@@ -140,10 +141,10 @@ export default function Dashboard(props: DashboardProps) {
   };
 
   const openReservationModal = (formData: any = null) => {
-    if (!formData) {
-      reset();
-    } else {
+    if (formData) {
       reset(formData);
+    } else {
+      reset();
     }
 
     setIsModalVisible(true);
@@ -174,15 +175,49 @@ export default function Dashboard(props: DashboardProps) {
     },
   ];
 
+  const searchHandler = (search: string) => {
+    axios
+      .get(`/api/reservations`, {
+        params: {
+          hotel: hotel?.id,
+          search,
+        },
+      })
+      .then((reservationResponse) => {
+        dispatchReservations({
+          type: ReservationActionsTypes.ReservationFetchSuccess,
+          payload: {
+            loading: false,
+            error: false,
+            data: {
+              ...reservationPage.data,
+              reservations: reservationResponse.data.map(
+                (reservation: IReservation) => ({
+                  id: reservation.id,
+                  checkInDate: reservation.checkInDate,
+                  checkOutDate: reservation.checkOutDate,
+                  guestFirstName: reservation.guest.firstName,
+                  guestLastName: reservation.guest.lastName,
+                  roomNumber: reservation.room.number,
+                })
+              ),
+            },
+          },
+        });
+      });
+  };
+
   const createReservation: SubmitHandler<ICreateReservationDTO> = (
     reservation: ICreateReservationDTO
   ) => {
     closeCreateReservationModal();
 
-    dispatchReservations({
-      type: ReservationActionsTypes.ReservationUpdateInit,
-      payload: reservationPage,
-    });
+    // dispatchReservations({
+    //   type: ReservationActionsTypes.ReservationUpdateInit,
+    //   payload: reservationPage,
+    // });
+
+    console.log('here', reservation);
 
     axios
       .post('/api/reservations', reservation)
@@ -223,7 +258,10 @@ export default function Dashboard(props: DashboardProps) {
     <section className={styles.reservations}>
       <section className={styles.header}>
         <h1 className={styles.title}>Reservations</h1>
-        <div className="flex flex-row p-2 justify-end">
+        <div className="flex flex-row p-2 gap-3 justify-end items-center">
+          <div className="flex-1 h-full">
+            <Search onSearch={searchHandler}></Search>
+          </div>
           <button className="buttonPrimary" onClick={openReservationModal}>
             Create Reservation
           </button>

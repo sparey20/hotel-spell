@@ -1,0 +1,23 @@
+.search {
+  @apply relative;
+  @apply flex;
+
+  .input {
+    @apply w-full;
+    @apply p-2;
+    @apply border-2;
+    @apply rounded-md;
+    @apply h-full;
+    @apply outline-none;
+    @apply focus:border-2;
+    @apply focus:border-emerald-300;
+  }
+
+  .button {
+    @apply p-2.5;
+    @apply absolute;
+    @apply top-0;
+    @apply end-0;
+    @apply h-full;
+  }
+}

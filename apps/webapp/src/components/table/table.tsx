@@ -94,12 +94,6 @@ export default function Table({
     return selectedItems.length === items.length;
   };
 
-  useEffect(() => {
-    if (itemsSelected) {
-      itemsSelected(selectedItems);
-    }
-  }, [JSON.stringify(selectedItems)]);
-
   return (
     <section className={styles.table}>
       <div className={headerClass}>
@@ -158,7 +152,7 @@ export default function Table({
               <div className={styles.moreOptions}>
                 <Dropdown
                   label=""
-                  dismissOnClick={false}
+                  dismissOnClick={true}
                   renderTrigger={() => (
                     <button type="button" className={styles.moreOptionsButton}>
                       <LuMoreVertical></LuMoreVertical>

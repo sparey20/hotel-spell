@@ -11,13 +11,17 @@ export class ReservationController {
     @Query('hotel') hotelId: string,
     @Query('checkInDate') checkInDate: string,
     @Query('checkOutDate') checkOutDate: string,
-    @Query('isActive') isActive: boolean
+    @Query('isActive') isActive: boolean,
+    @Query('search') search: string,
+    @Query('room') room: number
   ) {
     return this.reservationService.findAll({
       hotelId: hotelId ?? null,
       checkInDate: checkInDate ?? null,
       checkOutDate: checkOutDate ?? null,
       isActive: isActive ?? false,
+      search: search ?? '',
+      room: room ?? null,
     });
   }
 

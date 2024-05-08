@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+  ILike,
   LessThan,
   LessThanOrEqual,
   MoreThan,
@@ -44,10 +45,22 @@ export class ReservationService {
       checkInDate?: string;
       checkOutDate?: string;
       isActive?: boolean;
-    } = { hotelId: null, checkInDate: '', checkOutDate: '', isActive: false }
+      search?: string;
+      room?: number;
+    } = {
+      hotelId: null,
+      checkInDate: '',
+      checkOutDate: '',
+      isActive: false,
+      search: '',
+      room: null,
+    }
   ) {
-    const { hotelId, isActive, checkInDate, checkOutDate } = reservationParams;
+    const { hotelId, isActive, checkInDate, checkOutDate, search, room } =
+      reservationParams;
     const today = format(new Date(), 'P');
+
+    console.log('search', search);
 
     if (!hotelId) {
       throw new BadRequestException('No hotel provided');
@@ -71,6 +84,20 @@ export class ReservationService {
                   ? MoreThanOrEqual(today)
                   : LessThanOrEqual(checkOutDate),
               }),
+          ...(search
+            ? {
+                guest: {
+                  email: ILike(`%${search}%`),
+                },
+              }
+            : {}),
+          ...(room
+            ? {
+                room: {
+                  number: room,
+                },
+              }
+            : {}),
         },
         relations: {
           room: true,
