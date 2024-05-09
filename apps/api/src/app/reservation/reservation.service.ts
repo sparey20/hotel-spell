@@ -31,8 +31,11 @@ export class ReservationService {
   ) {}
 
   async findOne(id: string): Promise<Reservation> {
-    const reservation = await this.reservationRepository.findOneBy({
-      id,
+    const reservation = await this.reservationRepository.findOne({
+      where: {
+        id,
+      },
+      relations: ['guest'],
     });
 
     if (!reservation) {
@@ -147,7 +150,17 @@ export class ReservationService {
     return this.reservationRepository.save(reservation);
   }
 
-  async update(reservationId: string, updateUserDto: CreateReservationDto) {
+  async update(
+    reservationId: string,
+    updateUserDto: CreateReservationDto = {
+      email: null,
+      firstName: null,
+      lastName: null,
+      roomNumber: null,
+      checkInDate: null,
+      checkOutDate: null,
+    }
+  ) {
     const today = format(new Date(), 'P');
     const {
       email,
@@ -158,7 +171,7 @@ export class ReservationService {
       checkOutDate,
     } = updateUserDto;
 
-    if (isBefore(checkInDate, today)) {
+    if (checkInDate && isBefore(checkInDate, today)) {
       throw new BadRequestException('Cannot set check in date in the past');
     }
 
@@ -170,19 +183,38 @@ export class ReservationService {
 
     const guest = reservation.guest;
 
-    guest.firstName = firstName;
-    guest.lastName = lastName;
-    guest.email = email;
-    reservation.room.number = roomNumber;
-    reservation.checkInDate = checkInDate;
-    reservation.checkOutDate = checkOutDate;
+    if (firstName) {
+      guest.firstName = firstName;
+    }
 
+    if (lastName) {
+      guest.lastName = lastName;
+    }
+
+    if (email) {
+      guest.email = email;
+    }
+
+    if (roomNumber) {
+      reservation.room.number = roomNumber;
+    }
+
+    if (checkInDate) {
+      reservation.checkInDate = checkInDate;
+    }
+
+    if (checkOutDate) {
+      reservation.checkOutDate = checkOutDate;
+    }
 
     await this.entityManager.transaction(async (transactionEntityManager) => {
-      await transactionEntityManager.save(guest);
+      if (firstName || lastName || email) {
+        await transactionEntityManager.save(guest);
+      }
+
       await transactionEntityManager.save(reservation);
 
       return reservation;
-    })
+    });
   }
 }
