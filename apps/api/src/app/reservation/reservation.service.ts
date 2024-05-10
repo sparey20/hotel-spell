@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -19,6 +20,8 @@ import { GuestService } from '../guest/guest.service';
 import { RoomService } from '../room/room.service';
 import { format, isBefore } from 'date-fns';
 import { Guest } from '../guest/guest.entity';
+import { Room } from '../room/room.entity';
+import { UpdateReservationDto } from './dto/update-reservation.dto';
 
 @Injectable()
 export class ReservationService {
@@ -35,7 +38,7 @@ export class ReservationService {
       where: {
         id,
       },
-      relations: ['guest'],
+      relations: ['guest', 'room'],
     });
 
     if (!reservation) {
@@ -117,7 +120,7 @@ export class ReservationService {
     }
   }
 
-  async create(createUserDto: CreateReservationDto) {
+  async create(createReservationDto: CreateReservationDto) {
     const {
       email,
       firstName,
@@ -125,7 +128,7 @@ export class ReservationService {
       roomNumber,
       checkInDate,
       checkOutDate,
-    } = createUserDto;
+    } = createReservationDto;
     const reservation = new Reservation();
     let guest = null;
     let room = null;
@@ -152,7 +155,7 @@ export class ReservationService {
 
   async update(
     reservationId: string,
-    updateUserDto: CreateReservationDto = {
+    updateReservationDto: Partial<UpdateReservationDto> = {
       email: null,
       firstName: null,
       lastName: null,
@@ -162,59 +165,52 @@ export class ReservationService {
     }
   ) {
     const today = format(new Date(), 'P');
-    const {
-      email,
-      firstName,
-      lastName,
-      roomNumber,
-      checkInDate,
-      checkOutDate,
-    } = updateUserDto;
+    const reservation = await this.findOne(reservationId);
 
-    if (checkInDate && isBefore(checkInDate, today)) {
+    if (updateReservationDto.checkInDate && isBefore(updateReservationDto.checkInDate, today)) {
       throw new BadRequestException('Cannot set check in date in the past');
     }
-
-    const reservation = await this.findOne(reservationId);
 
     if (!reservation) {
       throw new NotFoundException('Reservation not found');
     }
 
+    const {roomNumber, checkInDate, checkOutDate, ...guestUpdate} = updateReservationDto;
     const guest = reservation.guest;
-
-    if (firstName) {
-      guest.firstName = firstName;
-    }
-
-    if (lastName) {
-      guest.lastName = lastName;
-    }
-
-    if (email) {
-      guest.email = email;
-    }
+    let room = reservation.room;
 
     if (roomNumber) {
-      reservation.room.number = roomNumber;
+      room = await this.roomService.findOneByRoomNumber(roomNumber);
     }
 
-    if (checkInDate) {
-      reservation.checkInDate = checkInDate;
+    if (room) {
+      reservation.room = room;
     }
 
-    if (checkOutDate) {
-      reservation.checkOutDate = checkOutDate;
+    reservation.checkInDate = checkInDate ?? reservation.checkInDate;
+    reservation.checkOutDate = checkOutDate ?? reservation.checkOutDate;
+    reservation.room = room;
+    guest.email = guestUpdate?.email ?? guest.email;
+    guest.firstName = guestUpdate.firstName ?? guest.firstName;
+    guest.lastName = guestUpdate.lastName ?? guest.lastName;
+
+    try {
+      await this.entityManager.transaction(async (transactionEntityManager) => {
+        if (Object.keys(guestUpdate).length > 0) {
+          await transactionEntityManager.save(guest);
+        }
+  
+        await transactionEntityManager.save(reservation);
+      });
+    } catch(error) {
+      throw new InternalServerErrorException('Unable to complete reservation update.')
     }
+    
 
-    await this.entityManager.transaction(async (transactionEntityManager) => {
-      if (firstName || lastName || email) {
-        await transactionEntityManager.save(guest);
-      }
+    return reservation;
+  }
 
-      await transactionEntityManager.save(reservation);
-
-      return reservation;
-    });
+  async delete(reservationId: string) {
+    await this.reservationRepository.delete(reservationId);
   }
 }

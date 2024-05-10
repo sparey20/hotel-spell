@@ -5,6 +5,7 @@ export type ReservationTableItem = {
   id: string;
   guestFirstName: string;
   guestLastName: string;
+  guestEmail: string;
   roomNumber: number;
   checkInDate: string;
   checkOutDate: string;

@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ReservationService } from './reservation.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
+import { UpdateReservationDto } from './dto/update-reservation.dto';
 
 @Controller('reservations')
 export class ReservationController {
@@ -36,7 +37,12 @@ export class ReservationController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateReservationDto: CreateReservationDto) {
+  update(@Param('id') id: string, @Body() updateReservationDto: Partial<UpdateReservationDto>) {
     return this.reservationService.update(id, updateReservationDto)
+  }
+
+  @Delete(':id')
+  delete(@Param('id') id: string) {
+    return this.reservationService.delete(id)
   }
 }

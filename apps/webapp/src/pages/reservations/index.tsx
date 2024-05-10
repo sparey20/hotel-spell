@@ -66,6 +66,40 @@ const reservationActionMap = new Map<
       } as ReservationState),
   ],
   [
+    ReservationActionsTypes.UpdateReservation,
+    (state: ReservationState, action: ReservationAction) =>
+      {
+        const reservationIndex = (state.data.reservations as ReservationTableItem[])
+        .findIndex((reservation: ReservationTableItem) => reservation.id === (action.payload.data.reservations as ReservationTableItem).id)
+        return {
+          ...state,
+          loading: false,
+          data: {
+            ...action.payload.data,
+            reservations: [
+              ...((state.data.reservations as ReservationTableItem[]).slice(0, reservationIndex)),
+              action.payload.data.reservations,
+              ...(state.data.reservations as ReservationTableItem[]).slice(reservationIndex + 1),
+            ],
+          },
+        } as ReservationState
+      },
+  ],
+  [
+    ReservationActionsTypes.RemoveReservation,
+    (state: ReservationState, action: ReservationAction) =>
+      {
+        return {
+          ...state,
+          loading: false,
+          data: {
+            ...action.payload.data,
+            reservations: (state.data.reservations as ReservationTableItem[]).filter(reservation => reservation.id !== (action.payload.data.reservations as ReservationTableItem).id),
+          },
+        } as ReservationState
+      },
+  ],
+  [
     ReservationActionsTypes.ReservationUpdateInit,
     (state: ReservationState, action: ReservationAction) =>
       ({
@@ -83,6 +117,18 @@ const reservationsReducer = (
 
   return mappedAction ? mappedAction(state, action) : state;
 };
+
+const mapReservationsDataToTableItems = (reservations: IReservation[]): ReservationTableItem[] => {
+  return reservations.map(reservation => ({
+    id: reservation.id,
+    checkInDate: reservation.checkInDate,
+    checkOutDate: reservation.checkOutDate,
+    guestFirstName: reservation.guest.firstName,
+    guestLastName: reservation.guest.lastName,
+    guestEmail: reservation.guest.email,
+    roomNumber: reservation.room.number,
+  }))
+}
 
 export default function Reservations(props: ReservationProps) {
   const { hotel } = useAppSelector((state) => state.hotel) as {
@@ -123,16 +169,7 @@ export default function Reservations(props: ReservationProps) {
               loading: false,
               error: false,
               data: {
-                reservations: reservationResponse.data.map(
-                  (reservation: IReservation) => ({
-                    id: reservation.id,
-                    checkInDate: reservation.checkInDate,
-                    checkOutDate: reservation.checkOutDate,
-                    guestFirstName: reservation.guest.firstName,
-                    guestLastName: reservation.guest.lastName,
-                    roomNumber: reservation.room.number,
-                  })
-                ),
+                reservations: mapReservationsDataToTableItems(reservationResponse.data),
                 rooms: roomsResponse.data,
               },
             },
@@ -145,7 +182,15 @@ export default function Reservations(props: ReservationProps) {
     if (formData) {
       reset(formData);
     } else {
-      reset();
+      reset({
+        firstName: '',
+        lastName: '',
+        email: '',
+        roomNumber: 0,
+        checkInDate: '',
+        checkOutDate: '',
+        id: ''
+      });
     }
 
     setIsModalVisible(true);
@@ -158,25 +203,55 @@ export default function Reservations(props: ReservationProps) {
   const { register, handleSubmit, reset, getValues, trigger, formState } =
     useForm<ReservationModalFormInputs>({
       mode: 'onBlur',
+      defaultValues: {
+        firstName: '',
+        lastName: '',
+        email: '',
+        roomNumber: 0,
+        checkInDate: '',
+        checkOutDate: '',
+        id: ''
+      }
     });
 
   const reservationTableActions = [
     {
       label: 'Edit',
       action: (item: any) => {
-        console.log('item', item);
         openReservationModal({
           id: item.id,
           firstName: item.guestFirstName,
           lastName: item.guestLastName,
-          email: '',
+          email: item.guestEmail,
           roomNumber: item.roomNumber,
           checkInDate: item.checkInDate,
           checkOutDate: item.checkOutDate,
         });
       },
     },
+    {
+      label: 'Delete',
+      action: (item: any) => {
+        deleteReservation(item);
+      },
+    },
   ];
+
+  const deleteReservation = (reservation: ReservationTableItem) => {
+    axios.delete(`/api/reservations/${reservation.id}`).then(() => {
+      dispatchReservations({
+        type: ReservationActionsTypes.RemoveReservation,
+        payload: {
+          loading: false,
+          error: false,
+          data: {
+            ...reservationPage.data,
+            reservations: reservation
+          },
+        },
+      });
+    }).catch((error) => console.log('error', error));
+  }
 
   const searchHandler = (search: string) => {
     axios
@@ -194,23 +269,68 @@ export default function Reservations(props: ReservationProps) {
             error: false,
             data: {
               ...reservationPage.data,
-              reservations: reservationResponse.data.map(
-                (reservation: IReservation) => ({
-                  id: reservation.id,
-                  checkInDate: reservation.checkInDate,
-                  checkOutDate: reservation.checkOutDate,
-                  guestFirstName: reservation.guest.firstName,
-                  guestLastName: reservation.guest.lastName,
-                  roomNumber: reservation.room.number,
-                })
-              ),
+              reservations: mapReservationsDataToTableItems(reservationResponse.data)
             },
           },
         });
-      });
+      }).catch((error) => console.log('error', error));
   };
 
-  const createEditReservation: SubmitHandler<ReservationModalFormInputs> = (
+  const createReservation = (reservationForm: ReservationModalFormInputs): void => {
+    axios
+    .post('/api/reservations', reservationForm)
+    .then(({ data }: AxiosResponse<IReservation>) => {
+      const { id, guest, room, checkInDate, checkOutDate } = data;
+      dispatchReservations({
+        type: ReservationActionsTypes.AddReservation,
+        payload: {
+          ...reservationPage,
+          data: {
+            ...reservationPage.data,
+            reservations: {
+              id,
+              guestFirstName: guest.firstName,
+              guestLastName: guest.lastName,
+              guestEmail: guest.email,
+              roomNumber: room.number,
+              checkInDate,
+              checkOutDate,
+            },
+          },
+        },
+      });
+    })
+    .catch((error) => console.log('error', error));
+  }
+
+  const editReservation = (reservationForm: ReservationModalFormInputs): void => {
+    axios
+    .patch(`/api/reservations/${reservationForm.id}`, reservationForm)
+    .then(({ data }: AxiosResponse<IReservation>) => {
+      const { id, guest, room, checkInDate, checkOutDate } = data;
+      dispatchReservations({
+        type: ReservationActionsTypes.UpdateReservation,
+        payload: {
+          ...reservationPage,
+          data: {
+            ...reservationPage.data,
+            reservations: {
+              id,
+              guestFirstName: guest.firstName,
+              guestLastName: guest.lastName,
+              guestEmail: guest.email,
+              roomNumber: room.number,
+              checkInDate,
+              checkOutDate,
+            },
+          },
+        },
+      });
+    })
+    .catch((error) => console.log('error', error));
+  }
+
+  const handleReservationSubmit: SubmitHandler<ReservationModalFormInputs> = (
     reservationForm: ReservationModalFormInputs
   ) => {
     closeCreateReservationModal();
@@ -220,33 +340,12 @@ export default function Reservations(props: ReservationProps) {
       payload: reservationPage,
     });
 
-    console.log('here', reservationForm);
-
-    if (!reservationForm.id) {
-        axios
-          .post('/api/reservations', reservationForm)
-          .then(({ data }: AxiosResponse<IReservation>) => {
-            const { id, guest, room, checkInDate, checkOutDate } = data;
-            dispatchReservations({
-              type: ReservationActionsTypes.AddReservation,
-              payload: {
-                ...reservationPage,
-                data: {
-                  ...reservationPage.data,
-                  reservations: {
-                    id,
-                    guestFirstName: guest.firstName,
-                    guestLastName: guest.lastName,
-                    roomNumber: room.number,
-                    checkInDate,
-                    checkOutDate,
-                  },
-                },
-              },
-            });
-          })
-          .catch((error) => console.log('error', error));
+    if (reservationForm.id) {
+          editReservation(reservationForm);
+          return;
     }
+
+    createReservation(reservationForm);
   };
 
   useEffect(() => {
@@ -274,7 +373,7 @@ export default function Reservations(props: ReservationProps) {
             <Modal
               header="Create or Edit a Reservation"
               onClose={closeCreateReservationModal}
-              onConfirm={handleSubmit(createEditReservation)}
+              onConfirm={handleSubmit(handleReservationSubmit)}
             >
               <section className="flex flex-col">
                 <form className="flex flex-col gap-4">

@@ -1,27 +1,21 @@
-import { IsString, IsEmail, IsNumber, IsDateString, IsNotEmpty } from 'class-validator';
+import { IsString, IsEmail, IsNumber, IsDateString } from 'class-validator';
 
-export class CreateReservationDto {
+export class UpdateReservationDto {
   @IsEmail()
-  @IsNotEmpty()
   email: string;
 
   @IsString()
-  @IsNotEmpty()
   firstName: string;
 
   @IsString()
-  @IsNotEmpty()
   lastName: string;
 
   @IsNumber()
-  @IsNotEmpty()
   roomNumber: number;
 
   @IsDateString()
-  @IsNotEmpty()
   checkInDate: string;
 
   @IsDateString()
-  @IsNotEmpty()
   checkOutDate: string;
 }
