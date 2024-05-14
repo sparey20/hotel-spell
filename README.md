@@ -15,7 +15,7 @@ Mono repo utilizing Nx
 ## Installation
 
 Run `npm install` \
-Run `npm install -g nx` \
+Run `npm install -g nx`
 
 ## Local Development
 
