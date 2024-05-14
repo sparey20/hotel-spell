@@ -14,13 +14,13 @@ export const RESERVATION_COLUMNS: TableColumn[] = [
     size: 2,
   },
   {
-    sortable: false,
+    sortable: true,
     label: 'Check In',
     key: 'checkInDate',
     size: 2,
   },
   {
-    sortable: false,
+    sortable: true,
     label: 'Check Out',
     key: 'checkOutDate',
     size: 2,

@@ -25,6 +25,9 @@ export class RoomService {
           id: hotelId,
         },
       },
+      order: {
+        number: 'ASC',
+      },
     });
   }
 

@@ -8,9 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import {
   EntityManager,
   ILike,
-  LessThan,
   LessThanOrEqual,
-  MoreThan,
   MoreThanOrEqual,
   Repository,
 } from 'typeorm';
@@ -19,9 +17,9 @@ import { CreateReservationDto } from './dto/create-reservation.dto';
 import { GuestService } from '../guest/guest.service';
 import { RoomService } from '../room/room.service';
 import { format, isBefore } from 'date-fns';
-import { Guest } from '../guest/guest.entity';
-import { Room } from '../room/room.entity';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
+import { ReservationFindParams } from './interfaces/reservation-find-params';
+import { Pagination, paginate } from 'nestjs-typeorm-paginate';
 
 @Injectable()
 export class ReservationService {
@@ -49,34 +47,27 @@ export class ReservationService {
   }
 
   async findAll(
-    reservationParams: {
-      hotelId: string;
-      checkInDate?: string;
-      checkOutDate?: string;
-      isActive?: boolean;
-      search?: string;
-      room?: number;
-    } = {
-      hotelId: null,
-      checkInDate: '',
-      checkOutDate: '',
-      isActive: false,
-      search: '',
-      room: null,
-    }
-  ) {
-    const { hotelId, isActive, checkInDate, checkOutDate, search, room } =
-      reservationParams;
+    reservationParams: ReservationFindParams
+  ): Promise<Pagination<Reservation>> {
+    const {
+      hotelId,
+      isActive,
+      checkInDate,
+      checkOutDate,
+      search,
+      room,
+      sortColumn,
+      sortDirection,
+      ...paginationOptions
+    } = reservationParams;
     const today = format(new Date(), 'P');
-
-    console.log('search', search);
 
     if (!hotelId) {
       throw new BadRequestException('No hotel provided');
     }
 
     try {
-      const reservations = await this.reservationRepository.find({
+      return paginate(this.reservationRepository, paginationOptions, {
         where: {
           room: {
             hotel: {
@@ -108,19 +99,25 @@ export class ReservationService {
               }
             : {}),
         },
+        order: {
+          ...(sortColumn
+            ? { [sortColumn]: sortDirection?.toUpperCase() ?? 'ASC' }
+            : {}),
+          updatedDate: 'DESC',
+        },
         relations: {
           room: true,
           guest: true,
         },
       });
-
-      return reservations;
     } catch (error) {
       throw new BadRequestException();
     }
   }
 
-  async create(createReservationDto: CreateReservationDto) {
+  async create(
+    createReservationDto: CreateReservationDto
+  ): Promise<Reservation> {
     const {
       email,
       firstName,
@@ -163,11 +160,14 @@ export class ReservationService {
       checkInDate: null,
       checkOutDate: null,
     }
-  ) {
+  ): Promise<Reservation> {
     const today = format(new Date(), 'P');
     const reservation = await this.findOne(reservationId);
 
-    if (updateReservationDto.checkInDate && isBefore(updateReservationDto.checkInDate, today)) {
+    if (
+      updateReservationDto.checkInDate &&
+      isBefore(updateReservationDto.checkInDate, today)
+    ) {
       throw new BadRequestException('Cannot set check in date in the past');
     }
 
@@ -175,7 +175,8 @@ export class ReservationService {
       throw new NotFoundException('Reservation not found');
     }
 
-    const {roomNumber, checkInDate, checkOutDate, ...guestUpdate} = updateReservationDto;
+    const { roomNumber, checkInDate, checkOutDate, ...guestUpdate } =
+      updateReservationDto;
     const guest = reservation.guest;
     let room = reservation.room;
 
@@ -199,18 +200,19 @@ export class ReservationService {
         if (Object.keys(guestUpdate).length > 0) {
           await transactionEntityManager.save(guest);
         }
-  
+
         await transactionEntityManager.save(reservation);
       });
-    } catch(error) {
-      throw new InternalServerErrorException('Unable to complete reservation update.')
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Unable to complete reservation update.'
+      );
     }
-    
 
     return reservation;
   }
 
-  async delete(reservationId: string) {
+  async delete(reservationId: string): Promise<void> {
     await this.reservationRepository.delete(reservationId);
   }
 }

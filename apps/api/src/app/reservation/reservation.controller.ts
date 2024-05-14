@@ -1,7 +1,19 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  DefaultValuePipe,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ReservationService } from './reservation.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
+import {} from 'nestjs-typeorm-paginate';
 
 @Controller('reservations')
 export class ReservationController {
@@ -10,19 +22,27 @@ export class ReservationController {
   @Get()
   findAll(
     @Query('hotel') hotelId: string,
-    @Query('checkInDate') checkInDate: string,
-    @Query('checkOutDate') checkOutDate: string,
-    @Query('isActive') isActive: boolean,
-    @Query('search') search: string,
-    @Query('room') room: number
+    @Query('checkInDate', new DefaultValuePipe(null)) checkInDate: string,
+    @Query('checkOutDate', new DefaultValuePipe(null)) checkOutDate: string,
+    @Query('isActive', new DefaultValuePipe(false)) isActive: boolean,
+    @Query('search', new DefaultValuePipe('')) search: string,
+    @Query('room', new DefaultValuePipe(null)) room: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit = 10,
+    @Query('sortDirection', new DefaultValuePipe('')) sortDirection,
+    @Query('sortColumn', new DefaultValuePipe(null)) sortColumn
   ) {
     return this.reservationService.findAll({
-      hotelId: hotelId ?? null,
-      checkInDate: checkInDate ?? null,
-      checkOutDate: checkOutDate ?? null,
-      isActive: isActive ?? false,
-      search: search ?? '',
-      room: room ?? null,
+      hotelId,
+      checkInDate,
+      checkOutDate,
+      isActive,
+      search,
+      room,
+      page,
+      limit,
+      sortDirection,
+      sortColumn,
     });
   }
 
@@ -37,12 +57,15 @@ export class ReservationController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateReservationDto: Partial<UpdateReservationDto>) {
-    return this.reservationService.update(id, updateReservationDto)
+  update(
+    @Param('id') id: string,
+    @Body() updateReservationDto: Partial<UpdateReservationDto>
+  ) {
+    return this.reservationService.update(id, updateReservationDto);
   }
 
   @Delete(':id')
   delete(@Param('id') id: string) {
-    return this.reservationService.delete(id)
+    return this.reservationService.delete(id);
   }
 }

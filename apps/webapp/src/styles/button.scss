@@ -30,4 +30,9 @@
   &:hover {
     @apply bg-slate-100;
   }
+
+  &:disabled {
+    @apply text-slate-300;
+    @apply bg-inherit;
+  }
 }

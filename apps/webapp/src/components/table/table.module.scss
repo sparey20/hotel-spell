@@ -17,6 +17,25 @@
       @apply p-3;
       @apply border-b;
 
+      &.loading {
+        @apply animate-pulse;
+      }
+
+      .loaderIcon {
+        @apply rounded-full;
+        @apply w-4;
+        @apply h-4;
+        @apply bg-slate-300;
+      }
+
+      .loaderBar {
+        @apply flex;
+        @apply justify-center;
+        @apply h-2.5;
+        @apply bg-slate-300;
+        @apply rounded-full;
+      }
+
       &:hover {
         @apply bg-slate-100;
       }
@@ -26,6 +45,18 @@
       }
     }
   }
+
+  .actionBar {
+    @apply h-12;
+    @apply border-y;
+    @apply bg-slate-50;
+    @apply flex;
+    @apply justify-end;
+    @apply content-center;
+    @apply text-slate-500;
+    @apply p-2;
+  }
+
   .checkBox {
     @apply border;
     @apply rounded;

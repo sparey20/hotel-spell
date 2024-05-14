@@ -18,12 +18,24 @@ export type ReservationAction = {
 
 export type ReservationStateData = {
   reservations: ReservationTableItem[] | ReservationTableItem;
+  pagination: {
+    totalItems: number;
+    itemCount: number;
+    itemsPerPage: number;
+    totalPages: number;
+    currentPage: number;
+  };
   rooms: IRoom[];
 };
 
 export type ReservationState = {
   loading: boolean;
   error: boolean;
+  search: string;
+  sorting: {
+    column: string;
+    direction: 'asc' | 'desc';
+  };
   data: ReservationStateData;
 };
 
@@ -35,4 +47,4 @@ export type ReservationModalFormInputs = {
   checkInDate: string;
   checkOutDate: string;
   id: string;
-}
+};
