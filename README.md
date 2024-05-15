@@ -1,6 +1,6 @@
 # HotelSpell
 
-Hotel Management application designed for customers to mange reservations, guests, service, and rooms.
+Hotel Management application designed for customers to manage reservations, guests, service, and rooms.
 
 ## Tech Stack
 
