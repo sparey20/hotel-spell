@@ -41,7 +41,7 @@ function CustomApp({ Component, pageProps }: AppProps) {
           <main className="h-full flex-col flex">
             <Header></Header>
             <Flowbite theme={{ theme: flowbiteTheme }}>
-              <section className="flex flex-row h-full">
+              <section className="flex flex-row h-full overflow-hidden">
                 <Navigation></Navigation>
                 <Component {...pageProps} />
               </section>

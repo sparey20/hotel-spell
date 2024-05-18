@@ -141,24 +141,35 @@ export default function Table({
     sorting.sortColumn(column.key, direction);
   };
 
+  const paginationMetaData = () => {
+    let currentItems = 0;
+    let nextItems = 0;
+    const totalItems = pagination?.totalItems ?? 0;
+
+    if (!pagination) {
+      return '';
+    }
+
+    if (pagination?.currentPage === 1) {
+      currentItems = 1;
+      nextItems = pagination?.currentPage * pagination?.itemsPerPage;
+    } else if (pagination?.currentPage * pagination.itemsPerPage < totalItems) {
+      currentItems = (pagination?.currentPage - 1) * pagination?.itemsPerPage;
+      nextItems = pagination.currentPage * pagination.itemsPerPage;
+    } else {
+      currentItems = totalItems;
+      nextItems = totalItems;
+    }
+
+    return `${currentItems}-${nextItems} of ${totalItems}`;
+  };
+
   return (
     <section className={styles.table}>
       <div className={styles.actionBar}>
         {pagination && (
           <div className="flex flex-row gap-3 items-center">
-            <p>
-              {pagination.currentPage === 1
-                ? 1
-                : pagination.currentPage * pagination.itemsPerPage <
-                  pagination.totalItems
-                ? pagination.currentPage * pagination.itemsPerPage
-                : pagination.totalItems}
-              -
-              {pagination.currentPage + 1 < pagination.totalPages
-                ? (pagination.currentPage + 1) * pagination.itemsPerPage
-                : pagination.totalItems}
-              of {pagination.totalItems}
-            </p>
+            <p>{paginationMetaData()}</p>
             <button
               className="buttonIcon"
               onClick={pagination.goToPreviousPage}

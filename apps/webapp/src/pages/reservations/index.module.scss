@@ -1,5 +1,7 @@
 .reservations {
-  @apply w-full;
+  @apply flex;
+  @apply flex-col;
+  @apply flex-auto;
 
   .header {
     @apply p-4;
@@ -9,5 +11,10 @@
       @apply text-2xl;
       @apply font-bold;
     }
+  }
+
+  .tableContainer {
+    @apply flex;
+    @apply overflow-hidden;
   }
 }

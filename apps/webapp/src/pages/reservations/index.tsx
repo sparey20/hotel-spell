@@ -170,7 +170,7 @@ export default function Reservations(props: ReservationProps) {
           itemCount: 0,
           itemsPerPage,
           totalPages: 0,
-          currentPage: 0,
+          currentPage: 1,
         },
       },
     }
@@ -583,28 +583,30 @@ export default function Reservations(props: ReservationProps) {
           )}
         </div>
       </section>
-      <Table
-        items={reservationPage.data.reservations as ReservationTableItem[]}
-        idKey="id"
-        columns={RESERVATION_COLUMNS}
-        itemActions={reservationTableActions}
-        isLoading={reservationPage.loading}
-        pagination={{
-          totalItems: reservationPage.data.pagination.totalItems,
-          itemsPerPage: reservationPage.data.pagination.itemsPerPage,
-          totalPages: reservationPage.data.pagination.totalPages,
-          itemCount: reservationPage.data.pagination.itemCount,
-          currentPage: reservationPage.data.pagination.currentPage,
-          goToNextPage: handleGoToNextPage,
-          goToPreviousPage: handleGoToPreviosPage,
-        }}
-        sorting={{
-          column: reservationPage.sorting.column,
-          direction: reservationPage.sorting.direction,
-          sortColumn: (column, direction) =>
-            handleSortColumn(column, direction),
-        }}
-      ></Table>
+      <section className={styles.tableContainer}>
+        <Table
+          items={reservationPage.data.reservations as ReservationTableItem[]}
+          idKey="id"
+          columns={RESERVATION_COLUMNS}
+          itemActions={reservationTableActions}
+          isLoading={reservationPage.loading}
+          pagination={{
+            totalItems: reservationPage.data.pagination.totalItems,
+            itemsPerPage: reservationPage.data.pagination.itemsPerPage,
+            totalPages: reservationPage.data.pagination.totalPages,
+            itemCount: reservationPage.data.pagination.itemCount,
+            currentPage: reservationPage.data.pagination.currentPage,
+            goToNextPage: handleGoToNextPage,
+            goToPreviousPage: handleGoToPreviosPage,
+          }}
+          sorting={{
+            column: reservationPage.sorting.column,
+            direction: reservationPage.sorting.direction,
+            sortColumn: (column, direction) =>
+              handleSortColumn(column, direction),
+          }}
+        ></Table>
+      </section>
     </section>
   );
 }

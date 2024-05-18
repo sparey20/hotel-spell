@@ -1,4 +1,9 @@
 .table {
+  @apply flex;
+  @apply flex-col;
+  @apply flex-auto;
+  @apply overflow-hidden;
+
   .headerContainer {
     @apply grid;
     @apply h-12;
@@ -10,6 +15,11 @@
   }
 
   .rowContainer {
+    @apply overflow-y-auto;
+    @apply flex;
+    @apply flex-1;
+    @apply flex-col;
+
     .rowItem {
       @apply grid;
       @apply h-14;
