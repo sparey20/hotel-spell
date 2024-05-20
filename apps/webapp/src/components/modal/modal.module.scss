@@ -10,6 +10,17 @@
     @apply flex;
     @apply justify-center;
     @apply items-center;
+    visibility: hidden;
+
+    &.active {
+      visibility: visible;
+
+      .modalContent {
+        opacity: 1;
+        transform: scale(1);
+        visibility: visible;
+      }
+    }
 
     .modalContent {
       width: 500px;
@@ -23,24 +34,31 @@
       @apply flex;
       @apply flex-col;
 
+      opacity: 0;
+      transform: scale(0.8);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      visibility: hidden;
+
       .modalHeader {
         @apply flex;
         @apply flex-row;
         @apply justify-between;
         @apply p-4;
         @apply border-b;
+        @apply text-lg;
+        @apply font-semibold;
       }
 
       .modalBody {
-        @apply p-6;
+        @apply p-8;
         @apply flex-1;
       }
 
       .modalFooter {
         @apply flex;
+        @apply flex-row;
         @apply p-4;
         @apply border-t;
-        @apply justify-end;
         @apply gap-2;
       }
     }

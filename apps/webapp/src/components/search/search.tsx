@@ -22,7 +22,7 @@ export default function Search({ initialValue, onSearch }: SearchProps) {
         className={styles.input}
         value={search}
         onChange={(event) => setSearch(event.target.value)}
-        placeholder="Type in to search"
+        placeholder="Search"
         onKeyUp={(event) => keyUpHandler(event)}
       />
       <button className={styles.button} onClick={() => onSearch(search ?? '')}>

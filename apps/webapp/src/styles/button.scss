@@ -14,11 +14,11 @@
   @apply rounded-md;
   @apply p-2;
   @apply border;
-  @apply border-emerald-600;
-  @apply text-emerald-600;
+  @apply border-emerald-700;
+  @apply text-emerald-700;
 
   &:hover {
-    @apply bg-emerald-600;
+    @apply bg-emerald-700;
     @apply text-white;
   }
 }

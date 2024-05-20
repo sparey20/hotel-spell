@@ -4,13 +4,13 @@
 
   .input {
     @apply w-full;
-    @apply p-2;
-    @apply border-2;
+    @apply p-4;
+    @apply shadow-md;
     @apply rounded-md;
     @apply h-full;
     @apply outline-none;
-    @apply focus:border-2;
-    @apply focus:border-emerald-300;
+    @apply focus:ring-2;
+    @apply focus:ring-emerald-700;
   }
 
   .button {

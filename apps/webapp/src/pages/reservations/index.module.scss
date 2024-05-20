@@ -2,19 +2,24 @@
   @apply flex;
   @apply flex-col;
   @apply flex-auto;
+  @apply bg-slate-50;
 
   .header {
     @apply p-4;
-    @apply pt-8;
+    @apply pb-0;
 
     .title {
       @apply text-2xl;
       @apply font-bold;
+      @apply text-emerald-900;
     }
   }
 
   .tableContainer {
     @apply flex;
     @apply overflow-hidden;
+    @apply rounded-lg;
+    @apply m-4;
+    @apply shadow-md;
   }
 }

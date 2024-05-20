@@ -5,7 +5,7 @@ import {
   IRoom,
 } from '@hotel-spell/api-interfaces';
 import axios, { AxiosResponse } from 'axios';
-import { useEffect, useReducer, useState } from 'react';
+import { Fragment, useEffect, useReducer, useState } from 'react';
 import styles from './index.module.scss';
 import Table, { TableColumn } from '../../components/table/table';
 import Modal from '../../components/modal/modal';
@@ -339,11 +339,6 @@ export default function Reservations(props: ReservationProps) {
   };
 
   const searchHandler = (search: string) => {
-    dispatchReservations({
-      type: ReservationActionsTypes.ReservationFetchInit,
-      payload: reservationPage,
-    });
-
     axios
       .get(`/api/reservations`, {
         params: {
@@ -452,20 +447,10 @@ export default function Reservations(props: ReservationProps) {
   };
 
   const handleGoToNextPage = () => {
-    dispatchReservations({
-      type: ReservationActionsTypes.ReservationFetchInit,
-      payload: reservationPage,
-    });
-
     getReservations({ page: reservationPage.data.pagination.currentPage + 1 });
   };
 
   const handleGoToPreviosPage = () => {
-    dispatchReservations({
-      type: ReservationActionsTypes.ReservationFetchInit,
-      payload: reservationPage,
-    });
-
     getReservations({ page: reservationPage.data.pagination.currentPage - 1 });
   };
 
@@ -484,129 +469,128 @@ export default function Reservations(props: ReservationProps) {
   }, []);
 
   return (
-    <section className={styles.reservations}>
-      <section className={styles.header}>
-        <h1 className={styles.title}>Reservations</h1>
-        <div className="flex flex-row p-2 gap-3 justify-end items-center">
-          <div className="flex-1 h-full">
-            <Search onSearch={searchHandler}></Search>
-          </div>
-          <button
-            className="buttonPrimary"
-            onClick={() => openReservationModal()}
-          >
-            Create Reservation
-          </button>
-          {isModalVisible && (
-            <Modal
-              header="Create or Edit a Reservation"
-              onClose={closeCreateReservationModal}
-              onConfirm={handleSubmit(handleReservationSubmit)}
+    <Fragment>
+      <section className={styles.reservations}>
+        <section className={styles.header}>
+          <h1 className={styles.title}>Reservations</h1>
+          <div className="flex flex-row pt-2 gap-3 justify-end items-center">
+            <div className="flex-1 h-full">
+              <Search onSearch={searchHandler}></Search>
+            </div>
+            <button
+              className="buttonPrimary"
+              onClick={() => openReservationModal()}
             >
-              <section className="flex flex-col">
-                <form className="flex flex-col gap-4">
-                  <input
-                    className={`formInput ${
-                      formState.errors.firstName ? 'error' : ''
-                    }`}
-                    type="text"
-                    placeholder="First Name *"
-                    {...register('firstName', { required: true })}
-                  />
-                  <input
-                    className={`formInput ${
-                      formState.errors.lastName ? 'error' : ''
-                    }`}
-                    type="text"
-                    placeholder="Last Name *"
-                    {...register('lastName', { required: true })}
-                  />
-                  <input
-                    className={`formInput ${
-                      formState.errors.email ? 'error' : ''
-                    }`}
-                    type="text"
-                    placeholder="Email *"
-                    {...register('email', {
-                      required: true,
-                      pattern: /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/g,
-                    })}
-                  />
-                  <select
-                    className={`formInput ${
-                      formState.errors.roomNumber ? 'error' : ''
-                    }`}
-                    {...register('roomNumber', { required: true })}
-                  >
-                    <option disabled>Room Number *</option>
-                    {reservationPage.data.rooms.map((room) => (
-                      <option key={room.id} value={room.number}>
-                        {room.number}
-                      </option>
-                    ))}
-                  </select>
-                  <label>Check In Date</label>
-                  <input
-                    className={`formInput ${
-                      formState.errors.checkInDate ? 'error' : ''
-                    }`}
-                    type="date"
-                    min={today}
-                    {...register('checkInDate', {
-                      required: true,
-                      min: today,
-                      disabled: getValues('id') ? true : false,
-                    })}
-                    aria-invalid={
-                      formState.errors.checkInDate ? 'true' : 'false'
-                    }
-                    onInput={() => {
-                      trigger('checkOutDate');
-                    }}
-                  />
-                  <label>Check Out Date</label>
-                  <input
-                    className={`formInput ${
-                      formState.errors.checkOutDate ? 'error' : ''
-                    }`}
-                    type="date"
-                    min={getValues('checkInDate')}
-                    {...register('checkOutDate', {
-                      required: true,
-                      min: getValues('checkInDate'),
-                    })}
-                  />
-                  <input type="hidden" {...register('id')} />
-                </form>
-              </section>
-            </Modal>
-          )}
-        </div>
+              Create Reservation
+            </button>
+          </div>
+        </section>
+        <section className={styles.tableContainer}>
+          <Table
+            items={reservationPage.data.reservations as ReservationTableItem[]}
+            idKey="id"
+            columns={RESERVATION_COLUMNS}
+            itemActions={reservationTableActions}
+            isLoading={reservationPage.loading}
+            pagination={{
+              totalItems: reservationPage.data.pagination.totalItems,
+              itemsPerPage: reservationPage.data.pagination.itemsPerPage,
+              totalPages: reservationPage.data.pagination.totalPages,
+              itemCount: reservationPage.data.pagination.itemCount,
+              currentPage: reservationPage.data.pagination.currentPage,
+              goToNextPage: handleGoToNextPage,
+              goToPreviousPage: handleGoToPreviosPage,
+            }}
+            sorting={{
+              column: reservationPage.sorting.column,
+              direction: reservationPage.sorting.direction,
+              sortColumn: (column, direction) =>
+                handleSortColumn(column, direction),
+            }}
+          ></Table>
+        </section>
       </section>
-      <section className={styles.tableContainer}>
-        <Table
-          items={reservationPage.data.reservations as ReservationTableItem[]}
-          idKey="id"
-          columns={RESERVATION_COLUMNS}
-          itemActions={reservationTableActions}
-          isLoading={reservationPage.loading}
-          pagination={{
-            totalItems: reservationPage.data.pagination.totalItems,
-            itemsPerPage: reservationPage.data.pagination.itemsPerPage,
-            totalPages: reservationPage.data.pagination.totalPages,
-            itemCount: reservationPage.data.pagination.itemCount,
-            currentPage: reservationPage.data.pagination.currentPage,
-            goToNextPage: handleGoToNextPage,
-            goToPreviousPage: handleGoToPreviosPage,
-          }}
-          sorting={{
-            column: reservationPage.sorting.column,
-            direction: reservationPage.sorting.direction,
-            sortColumn: (column, direction) =>
-              handleSortColumn(column, direction),
-          }}
-        ></Table>
-      </section>
-    </section>
+      <Modal
+        isVisible={isModalVisible}
+        header="Create or Edit a Reservation"
+        onClose={closeCreateReservationModal}
+        onConfirm={handleSubmit(handleReservationSubmit)}
+      >
+        <section className="flex flex-col">
+          <form className="flex flex-col gap-4">
+            <div className="flex flex-row gap-2 w-full">
+              <input
+                className={`formInput w-full ${
+                  formState.errors.firstName ? 'error' : ''
+                }`}
+                type="text"
+                placeholder="First Name *"
+                {...register('firstName', { required: true })}
+              />
+              <input
+                className={`formInput w-full ${
+                  formState.errors.lastName ? 'error' : ''
+                }`}
+                type="text"
+                placeholder="Last Name *"
+                {...register('lastName', { required: true })}
+              />
+            </div>
+            <input
+              className={`formInput ${formState.errors.email ? 'error' : ''}`}
+              type="text"
+              placeholder="Email *"
+              {...register('email', {
+                required: true,
+                pattern: /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/g,
+              })}
+            />
+            <select
+              className={`formInput ${
+                formState.errors.roomNumber ? 'error' : ''
+              }`}
+              {...register('roomNumber', { required: true })}
+            >
+              <option disabled>Room Number *</option>
+              {reservationPage.data.rooms.map((room) => (
+                <option key={room.id} value={room.number}>
+                  {room.number}
+                </option>
+              ))}
+            </select>
+            <label>Check In Date</label>
+            <input
+              className={`formInput ${
+                formState.errors.checkInDate ? 'error' : ''
+              }`}
+              type="date"
+              min={today}
+              {...register('checkInDate', {
+                required: true,
+                min: today,
+                disabled: getValues('id') ? true : false,
+              })}
+              aria-invalid={formState.errors.checkInDate ? 'true' : 'false'}
+              onInput={() => {
+                trigger('checkOutDate');
+              }}
+            />
+            <label>Check Out Date</label>
+            <input
+              className={`formInput ${
+                formState.errors.checkOutDate ? 'error' : ''
+              }`}
+              type="date"
+              min={getValues('checkInDate')}
+              {...register('checkOutDate', {
+                required: true,
+                min: getValues('checkInDate'),
+              })}
+            />
+            <input type="hidden" {...register('id')} />
+          </form>
+        </section>
+      </Modal>
+    </Fragment>
   );
 }

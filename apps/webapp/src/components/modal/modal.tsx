@@ -1,7 +1,10 @@
+import { useEffect, useState } from 'react';
 import styles from './modal.module.scss';
 import { IoCloseOutline } from 'react-icons/io5';
+import { set } from 'date-fns';
 
 type ModalProps = {
+  isVisible: boolean;
   header?: string;
   onClose?: () => void;
   onConfirm?: () => void;
@@ -13,31 +16,55 @@ export default function Modal({
   onClose,
   onConfirm,
   children,
+  isVisible,
 }: ModalProps) {
+  const [isActive, setIsActive] = useState(false);
+
+  useEffect(() => {
+    if (isVisible) {
+      setTimeout(() => setIsActive(true), 10);
+    } else {
+      setIsActive(false);
+    }
+  }, [isVisible]);
+
   return (
-    <section className={styles.modal}>
-      <section className={styles.modalBackdrop} onClick={onClose}>
+    isVisible && (
+      <section className={styles.modal}>
         <section
-          className={styles.modalContent}
-          onClick={(event) => event.stopPropagation()}
+          className={`${styles.modalBackdrop} ${
+            isActive ? `${styles.active}` : ''
+          }`}
+          onClick={onClose}
         >
-          <header className={styles.modalHeader}>
-            <h3>{header}</h3>
-            <button className="buttonIcon" onClick={onClose}>
-              <IoCloseOutline className="text-xl" />
-            </button>
-          </header>
-          <section className={styles.modalBody}>{children}</section>
-          <footer className={styles.modalFooter}>
-            <button className="buttonPrimary" onClick={onConfirm}>
-              Confirm
-            </button>
-            <button className="buttonDefault" onClick={onClose}>
-              Cancel
-            </button>
-          </footer>
+          <section
+            className={styles.modalContent}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className={styles.modalHeader}>
+              <h3>{header}</h3>
+              <button className="buttonIcon" onClick={onClose}>
+                <IoCloseOutline className="text-xl" />
+              </button>
+            </header>
+            <section className={styles.modalBody}>{children}</section>
+            <footer className={styles.modalFooter}>
+              <button
+                className="buttonDefault flex justify-center items-center flex-1"
+                onClick={onClose}
+              >
+                Cancel
+              </button>
+              <button
+                className="buttonPrimary flex justify-center items-center flex-1"
+                onClick={onConfirm}
+              >
+                Confirm
+              </button>
+            </footer>
+          </section>
         </section>
       </section>
-    </section>
+    )
   );
 }
