@@ -201,7 +201,10 @@ export default function Reservations(props: ReservationProps) {
       })
       .catch((error) => {
         dispatch(
-          showToastWithTimeout('Failed getting reservations.', 3000) as any
+          showToastWithTimeout({
+            message: 'Failed getting reservations.',
+            type: 'error',
+          }) as any
         );
       });
   };
