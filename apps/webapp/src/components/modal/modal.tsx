@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import styles from './modal.module.scss';
 import { IoCloseOutline } from 'react-icons/io5';
-import { set } from 'date-fns';
 
 type ModalProps = {
   isVisible: boolean;

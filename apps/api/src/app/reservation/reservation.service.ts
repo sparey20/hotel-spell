@@ -20,6 +20,7 @@ import { format, isBefore } from 'date-fns';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { ReservationFindParams } from './interfaces/reservation-find-params';
 import { Pagination, paginate } from 'nestjs-typeorm-paginate';
+import { ExceptionsHandler } from '@nestjs/core/exceptions/exceptions-handler';
 
 @Injectable()
 export class ReservationService {

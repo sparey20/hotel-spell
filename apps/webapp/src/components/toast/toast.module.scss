@@ -1,0 +1,29 @@
+.toast {
+  width: 400px;
+  height: 50px;
+  @apply fixed;
+  @apply top-10;
+  @apply right-0;
+  @apply bottom-0;
+  @apply left-0;
+  @apply z-50;
+  @apply p-3;
+  @apply rounded-md;
+  @apply mx-auto;
+  @apply shadow-md;
+
+  &.error {
+    @apply bg-red-500;
+    @apply text-white;
+  }
+
+  &.success {
+    @apply bg-green-500;
+    @apply text-white;
+  }
+
+  &.info {
+    @apply bg-blue-500;
+    @apply text-white;
+  }
+}

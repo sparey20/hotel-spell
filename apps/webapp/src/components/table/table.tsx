@@ -252,64 +252,72 @@ export default function Table({
         </ul>
       ) : (
         <ul className={styles.rowContainer}>
-          {items.map((item, index) => (
-            <li
-              key={item[idKey]}
-              className={`${rowItemClass} ${
-                isItemSelected(item[idKey]) ? `${styles.selected}` : ''
-              } ${isLoading ? `${styles.loading}` : ''}`}
-            >
-              <div className="col-span-1 flex justify-center items-center">
-                <input
-                  type="checkbox"
-                  className={styles.checkBox}
-                  checked={isItemSelected(item[idKey])}
-                  onChange={(event) => selectItem(event, item[idKey], index)}
-                />
-              </div>
-              <div
-                className={`col-span-10 grid ${
-                  columnWidthClassMapping[columns.length]
-                }`}
+          {items.length > 0 ? (
+            items.map((item, index) => (
+              <li
+                key={item[idKey]}
+                className={`${rowItemClass} ${
+                  isItemSelected(item[idKey]) ? `${styles.selected}` : ''
+                } ${isLoading ? `${styles.loading}` : ''}`}
               >
-                {columns.map((column) => (
-                  <div
-                    className="flex justify-center"
-                    key={`${item[idKey]}-${column.key}`}
-                  >
-                    {item[column.key]}
-                  </div>
-                ))}
-              </div>
-              <div className="col-span-1 flex justify-center">
-                <div className={styles.moreOptions}>
-                  <Dropdown
-                    label=""
-                    dismissOnClick={true}
-                    disabled={areMultipleItemsSelected()}
-                    renderTrigger={() => (
-                      <button
-                        type="button"
-                        className={styles.moreOptionsButton}
-                      >
-                        <LuMoreVertical></LuMoreVertical>
-                      </button>
-                    )}
-                    placement="bottom-end"
-                  >
-                    {itemActions?.map((itemAction) => (
-                      <Dropdown.Item
-                        key={itemAction.label}
-                        onClick={() => itemAction.action(item)}
-                      >
-                        {itemAction.label}
-                      </Dropdown.Item>
-                    ))}
-                  </Dropdown>
+                <div className="col-span-1 flex justify-center items-center">
+                  <input
+                    type="checkbox"
+                    className={styles.checkBox}
+                    checked={isItemSelected(item[idKey])}
+                    onChange={(event) => selectItem(event, item[idKey], index)}
+                  />
                 </div>
-              </div>
+                <div
+                  className={`col-span-10 grid ${
+                    columnWidthClassMapping[columns.length]
+                  }`}
+                >
+                  {columns.map((column) => (
+                    <div
+                      className="flex justify-center"
+                      key={`${item[idKey]}-${column.key}`}
+                    >
+                      {item[column.key]}
+                    </div>
+                  ))}
+                </div>
+                <div className="col-span-1 flex justify-center">
+                  <div className={styles.moreOptions}>
+                    <Dropdown
+                      label=""
+                      dismissOnClick={true}
+                      disabled={areMultipleItemsSelected()}
+                      renderTrigger={() => (
+                        <button
+                          type="button"
+                          className={styles.moreOptionsButton}
+                        >
+                          <LuMoreVertical></LuMoreVertical>
+                        </button>
+                      )}
+                      placement="bottom-end"
+                    >
+                      {itemActions?.map((itemAction) => (
+                        <Dropdown.Item
+                          key={itemAction.label}
+                          onClick={() => itemAction.action(item)}
+                        >
+                          {itemAction.label}
+                        </Dropdown.Item>
+                      ))}
+                    </Dropdown>
+                  </div>
+                </div>
+              </li>
+            ))
+          ) : (
+            <li
+              className={`${styles.rowItem} justify-center items-center text-slate-500`}
+            >
+              No results found.
             </li>
-          ))}
+          )}
         </ul>
       )}
     </section>
