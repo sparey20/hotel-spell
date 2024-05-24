@@ -2,27 +2,21 @@ import { IHotel, IReservation } from '@hotel-spell/api-interfaces';
 import axios, { AxiosResponse } from 'axios';
 import { Fragment, useEffect, useMemo, useReducer, useRef } from 'react';
 import styles from './index.module.scss';
-import Table, { TableColumn } from '../../components/table/table';
+import Table from '../../components/table/table';
 import { SubmitHandler } from 'react-hook-form';
 import { useAppDispatch, useAppSelector } from '../../lib/hooks';
 import {
   RESERVATION_COLUMNS,
   RESERVATION_ITEMS_PER_PAGE,
   RESERVATION_REDUCER,
-} from './constants';
-import { ReservationActionsTypes } from './enums';
-import { ReservationTableItem } from './types';
+} from '../../lib/features/reservation/constants';
+import { ReservationActionsTypes } from '../../lib/features/reservation/enums';
+import { ReservationTableItem } from '../../lib/features/reservation/types';
 import Search from '../../components/search/search';
 import ReservationFormModal from './components/reservationFormModal/reservationFormModal';
 import * as apiReservationService from '../../lib/features/reservation/apiReservationService';
 import * as apiRoomService from '../../lib/features/room/apiRoomService';
-import toastSlice, {
-  ToastState,
-  showToastWithTimeout,
-} from '../../lib/features/toast/toastSlice';
-import { AppDispatch } from '../../lib/store';
-import { UnknownAction } from 'redux';
-import { ThunkAction } from '@reduxjs/toolkit';
+import { showToastWithTimeout } from '../../lib/features/toast/toastSlice';
 
 /* eslint-disable-next-line */
 type ReservationProps = {};

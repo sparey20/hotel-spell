@@ -3,7 +3,7 @@ import Table from '../../components/table/table';
 import { useAppSelector } from '../../lib/hooks';
 import styles from './index.module.scss';
 import axios from 'axios';
-import { GUEST_COLUMNS } from './constants';
+import { GUEST_COLUMNS } from '../../lib/features/guest/constants';
 import { IHotel } from '@hotel-spell/api-interfaces';
 
 export default function Guests() {
@@ -26,8 +26,6 @@ export default function Guests() {
         <section className={styles.header}>
           <h1 className={styles.title}>Guests</h1>
         </section>
-
-        <Table items={[]} idKey="id" columns={GUEST_COLUMNS}></Table>
       </section>
     </div>
   );

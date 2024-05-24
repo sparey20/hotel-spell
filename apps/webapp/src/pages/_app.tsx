@@ -5,13 +5,13 @@ import Navigation from '../components/navigation/navigation';
 import { useEffect, useState } from 'react';
 import axios, { AxiosResponse } from 'axios';
 import { IHotel } from '@hotel-spell/api-interfaces';
-import { useAppDispatch, useAppSelector } from '../lib/hooks';
+import { useAppDispatch } from '../lib/hooks';
 import hotelSlice from '../lib/features/hotel/hotelSlice';
 import { Provider } from 'react-redux';
 import { wrapper } from '../lib/store';
 import '../styles/main.scss';
-import { Flowbite, theme } from 'flowbite-react';
-import flowbiteTheme from './flowbite-theme';
+import { Flowbite } from 'flowbite-react';
+import flowbiteTheme from '../lib/flowbite-theme';
 import Toast from '../components/toast/toast';
 
 function CustomApp({ Component, pageProps }: AppProps) {
