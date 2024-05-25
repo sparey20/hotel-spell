@@ -13,14 +13,15 @@ import '../styles/main.scss';
 import { Flowbite } from 'flowbite-react';
 import flowbiteTheme from '../lib/flowbite-theme';
 import Toast from '../components/toast/toast';
+import * as apiHotelService from '../lib/features/hotel/apiHotelService';
 
 function CustomApp({ Component, pageProps }: AppProps) {
   const { store } = wrapper.useWrappedStore(pageProps);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const dispatch = useAppDispatch();
   const getHotel = () => {
-    axios
-      .get('/api/hotels')
+    apiHotelService
+      .getHotels()
       .then(({ data }: AxiosResponse<IHotel[]>) => {
         dispatch(hotelSlice.actions.updateHotel(data[0]));
         setIsLoading(false);
