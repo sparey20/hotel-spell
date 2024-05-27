@@ -23,7 +23,6 @@ const nextConfig = {
 const nextProdConfig = {
   ...nextConfig,
   output: 'export',
-  basePath: '/hotel-spell',
 };
 
 /**
