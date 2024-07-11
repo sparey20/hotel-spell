@@ -359,7 +359,7 @@ export default function Reservations(props: ReservationProps) {
             <div className="flex-1 h-full">
               <Search onSearch={searchReservations}></Search>
             </div>
-            <button className="buttonPrimary" onClick={openReservationModal}>
+            <button className="buttonPrimary" onClick={() => openReservationModal()}>
               Create Reservation
             </button>
           </div>

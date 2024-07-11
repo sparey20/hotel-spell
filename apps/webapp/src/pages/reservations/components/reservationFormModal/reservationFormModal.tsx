@@ -36,7 +36,6 @@ const ReservationFormModal = forwardRef(
     }, [formState]);
 
     const openReservationModal = (formData: any = null) => {
-      console.log('opening reservation modal', formData);
       if (formData) {
         reset(formData);
       } else {
