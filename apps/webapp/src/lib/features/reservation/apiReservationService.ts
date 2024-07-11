@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { BASE_API_PATH } from '../../constants/base-api-path';
 
 export type GetReservationParams = {
   hotel: string;
@@ -19,7 +20,7 @@ export type ReservationDTO = {
   id: string;
 };
 
-const reservationApiPrefix = '/api/reservations';
+const reservationApiPrefix = `${BASE_API_PATH}/api/reservations`;
 
 export const getReservations = (params: GetReservationParams) => {
   return axios.get(reservationApiPrefix, { params });

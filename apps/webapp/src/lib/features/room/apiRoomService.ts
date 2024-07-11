@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { BASE_API_PATH } from '../../constants/base-api-path';
 
-const apiRoomsPrefix = '/api/rooms';
+const apiRoomsPrefix = `${BASE_API_PATH}/api/rooms`;
 
 export type GetRoomsParams = {
   hotel: string;
