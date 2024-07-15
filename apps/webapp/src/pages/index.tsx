@@ -13,6 +13,14 @@ export function Index() {
       <header className={styles.header}>
         <h1 className={styles.title}>{hotel?.name}</h1>
       </header>
+      <section className={styles.body}>
+        <div className='flex flex-row'>
+          <div className={styles.card}>
+            <div>45</div>
+            <div>Guests</div>
+          </div>
+        </div>
+      </section>
     </section>
   );
 }

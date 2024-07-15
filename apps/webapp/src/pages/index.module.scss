@@ -14,4 +14,17 @@
       @apply text-emerald-900;
     }
   }
+
+  .body {
+    @apply p-4;
+  }
+
+  .card {
+    @apply p-2;
+    @apply rounded-lg;
+    @apply border;
+    @apply border-emerald-300;
+    @apply bg-emerald-900;
+    @apply text-white;
+  }
 }
