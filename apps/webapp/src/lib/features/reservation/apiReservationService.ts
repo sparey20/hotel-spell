@@ -3,11 +3,12 @@ import { BASE_API_PATH } from '../../constants/base-api-path';
 
 export type GetReservationParams = {
   hotel: string;
-  limit: number;
-  sortColumn: string;
-  sortDirection: 'asc' | 'desc';
+  limit?: number;
+  sortColumn?: string;
+  sortDirection?: 'asc' | 'desc';
   search?: string;
   page?: number;
+  isActive?: boolean;
 };
 
 export type ReservationDTO = {

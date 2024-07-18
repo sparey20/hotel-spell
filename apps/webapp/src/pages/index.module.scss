@@ -20,11 +20,24 @@
   }
 
   .card {
-    @apply p-2;
+    @apply flex;
+    @apply flex-col;
+    @apply items-center;
+    @apply p-3;
     @apply rounded-lg;
-    @apply border;
-    @apply border-emerald-300;
-    @apply bg-emerald-900;
-    @apply text-white;
+    @apply bg-white;
+    @apply w-36;
+    @apply shadow;
+
+    .title {
+      @apply text-sm;
+      @apply text-slate-400;
+    }
+
+    .number {
+      @apply text-4xl;
+      @apply font-bold;
+      @apply text-emerald-900;
+    }
   }
 }
