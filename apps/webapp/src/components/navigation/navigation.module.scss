@@ -14,10 +14,12 @@
 
     &:hover {
       @apply text-emerald-400;
-      @apply bg-emerald-800;
+      @apply bg-emerald-900;
     }
 
     &.selected {
+      @apply text-emerald-300;
+      @apply bg-emerald-800;
     }
   }
 }

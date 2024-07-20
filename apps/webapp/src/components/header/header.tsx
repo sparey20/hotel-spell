@@ -1,6 +1,7 @@
+import { Tooltip } from 'flowbite-react';
 import { useAppSelector } from '../../lib/hooks';
 import styles from './header.module.scss';
-import { LuWand2 } from 'react-icons/lu';
+import { LuWand2, LuUser } from 'react-icons/lu';
 
 export default function Header() {
   const { hotel } = useAppSelector((state) => state.hotel);
@@ -11,7 +12,13 @@ export default function Header() {
         <LuWand2 color="#047857" />
         <h3 className="text-emerald-900 font-bold text-lg">Hotel Spell</h3>
       </div>
-      <div className="flex flex-row">User Menu</div>
+      <div className="flex flex-row">
+        <Tooltip content="User Menu">
+          <button className={styles.userMenuButton}>
+            <LuUser color="#FFFFFF" />
+          </button>
+        </Tooltip>
+      </div>
     </section>
   );
 }

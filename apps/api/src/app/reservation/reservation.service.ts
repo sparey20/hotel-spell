@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import {
   EntityManager,
   ILike,
+  LessThan,
   LessThanOrEqual,
   MoreThanOrEqual,
   Repository,
@@ -53,8 +54,6 @@ export class ReservationService {
     const {
       hotelId,
       isActive,
-      checkInDate,
-      checkOutDate,
       search,
       room,
       sortColumn,
@@ -75,15 +74,11 @@ export class ReservationService {
               id: hotelId,
             },
           },
-          ...(isActive || (!isActive && !checkInDate)
-            ? {}
-            : { checkInDate: MoreThanOrEqual(checkInDate) }),
-          ...(!isActive && !checkOutDate
+          ...(!isActive ? {} : { checkInDate: LessThanOrEqual(today) }),
+          ...(!isActive
             ? {}
             : {
-                checkOutDate: isActive
-                  ? MoreThanOrEqual(today)
-                  : LessThanOrEqual(checkOutDate),
+                checkOutDate: MoreThanOrEqual(today),
               }),
           ...(search
             ? {

@@ -7,4 +7,12 @@
   @apply p-4;
   height: 60px;
   @apply shadow-md;
+
+  .userMenuButton {
+    @apply flex;
+    @apply items-center;
+    @apply p-2;
+    @apply rounded-full;
+    @apply bg-emerald-800;
+  }
 }
