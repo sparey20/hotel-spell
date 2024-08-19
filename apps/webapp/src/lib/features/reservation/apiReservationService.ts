@@ -21,6 +21,12 @@ export type ReservationDTO = {
   id: string;
 };
 
+export type GetReservationByDayParams = {
+  hotel: string;
+  startDate: string;
+  endDate: string;
+};
+
 const reservationApiPrefix = `${BASE_API_PATH}/api/reservations`;
 
 export const getReservations = (params: GetReservationParams) => {
@@ -40,4 +46,8 @@ export const updateReservation = (
 
 export const deleteReservation = (id: string) => {
   return axios.delete(`${reservationApiPrefix}/${id}`);
+};
+
+export const getReservationsByDay = (params: GetReservationByDayParams) => {
+  return axios.get(`${reservationApiPrefix}/by-day`, { params });
 };

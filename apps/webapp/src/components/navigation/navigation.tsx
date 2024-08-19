@@ -7,6 +7,10 @@ import { useState } from 'react';
 export default function Navigation() {
   const [page, setPage] = useState('home');
 
+  const navigationClickHandler = (page: string) => () => {
+    setPage(page);
+  };
+
   return (
     <section className={styles.navigation}>
       <Tooltip content="Home">
@@ -15,7 +19,7 @@ export default function Navigation() {
             styles.link
           }`}
           href="/"
-          onClick={() => setPage('home')}
+          onClick={navigationClickHandler('home')}
         >
           <LuHome className="text-xl"></LuHome>
         </Link>
@@ -26,7 +30,7 @@ export default function Navigation() {
             styles.link
           }`}
           href="/reservations"
-          onClick={() => setPage('reservations')}
+          onClick={navigationClickHandler('reservations')}
         >
           <LuCalendarCheck className="text-xl"></LuCalendarCheck>
         </Link>
@@ -37,7 +41,7 @@ export default function Navigation() {
             styles.link
           }`}
           href="/guests"
-          onClick={() => setPage('guests')}
+          onClick={navigationClickHandler('guests')}
         >
           <LuUserCheck className="text-xl"></LuUserCheck>
         </Link>

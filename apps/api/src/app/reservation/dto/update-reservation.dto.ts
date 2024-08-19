@@ -1,4 +1,6 @@
-import { IsString, IsEmail, IsNumber, IsDateString } from 'class-validator';
+import { IsString, IsEmail, IsNumber, IsDateString, IsEnum } from 'class-validator';
+import { RoomStatus } from '../../room/room.entity';
+import { ReservationStatus } from '../reservation.entity';
 
 export class UpdateReservationDto {
   @IsEmail()
@@ -18,4 +20,7 @@ export class UpdateReservationDto {
 
   @IsDateString()
   checkOutDate: string;
+
+  @IsEnum(ReservationStatus)
+  status: ReservationStatus;
 }

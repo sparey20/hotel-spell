@@ -162,6 +162,10 @@ export default function Reservations(props: ReservationProps) {
       });
   };
 
+  const createReservationClickHandler = () => {
+    openReservationModal();
+  };
+
   const openReservationModal = (formData: any = null) => {
     (reservationFormModalRef as any)?.current?.openReservationModal(formData);
   };
@@ -373,7 +377,7 @@ export default function Reservations(props: ReservationProps) {
             </div>
             <button
               className="buttonPrimary"
-              onClick={() => openReservationModal()}
+              onClick={createReservationClickHandler}
             >
               Create Reservation
             </button>

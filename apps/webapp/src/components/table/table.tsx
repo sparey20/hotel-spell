@@ -6,8 +6,8 @@ import {
   LuChevronUp,
   LuMoreVertical,
 } from 'react-icons/lu';
-import { Dropdown, Pagination } from 'flowbite-react';
-import { Fragment, MouseEventHandler, useEffect, useState } from 'react';
+import { Dropdown } from 'flowbite-react';
+import { useState } from 'react';
 
 type TableProps = {
   items: { [key: string]: any }[];
@@ -82,6 +82,11 @@ export default function Table({
     setSelectedItems(items.map((item) => item[idKey]));
   };
 
+  const onChangeSelectedItemsHandler =
+    (id: string, index: number) => (event: any) => {
+      selectItem(event, id, index);
+    };
+
   const selectItem = (event: any, id: string, index: number) => {
     if (event.nativeEvent.shiftKey) {
       const lastSelectedItemIndex = items.findIndex(
@@ -116,18 +121,18 @@ export default function Table({
     return selectedItems.includes(id);
   };
 
-  const areAllItemsSelected = (): boolean => {
+  const computeAreAllItemsSelected = (): boolean => {
     if (items.length === 0) {
       return false;
     }
     return selectedItems.length === items.length;
   };
 
-  const areMultipleItemsSelected = (): boolean => {
-    return selectedItems.length > 1;
+  const clickSortColumnHeaderHandler = (column: TableColumn) => () => {
+    sortColumnHeader(column);
   };
 
-  const sortColumnHander = (column: TableColumn): any => {
+  const sortColumnHeader = (column: TableColumn): any => {
     if (!sorting?.sortColumn) {
       return;
     }
@@ -141,7 +146,7 @@ export default function Table({
     sorting.sortColumn(column.key, direction);
   };
 
-  const paginationMetaData = () => {
+  const computePaginationMetaData = () => {
     let currentItems = 0;
     let nextItems = 0;
     const totalItems = pagination?.totalItems ?? 0;
@@ -164,12 +169,20 @@ export default function Table({
     return `${currentItems}-${nextItems} of ${totalItems}`;
   };
 
+  const clickItemActionHandler = (itemAction: any, item: any) => () => {
+    itemAction.action(item);
+  };
+
+  const paginationText = computePaginationMetaData();
+  const areAllItemsSelected = computeAreAllItemsSelected();
+  const areMultipleItemsSelected = selectedItems.length > 1;
+
   return (
     <section className={styles.table}>
       <div className={styles.actionBar}>
         {pagination && (
           <div className="flex flex-row gap-3 items-center">
-            <p>{paginationMetaData()}</p>
+            <p>{paginationText}</p>
             <button
               className="buttonIcon"
               onClick={pagination.goToPreviousPage}
@@ -192,7 +205,7 @@ export default function Table({
           <input
             type="checkbox"
             className={styles.checkBox}
-            checked={areAllItemsSelected()}
+            checked={areAllItemsSelected}
             onChange={selectAll}
             disabled={isLoading}
           />
@@ -207,11 +220,11 @@ export default function Table({
               className="flex justify-center items-center gap-2"
               key={column.key}
               disabled={!column.sortable}
-              onClick={() => sortColumnHander(column)}
+              onClick={clickSortColumnHeaderHandler(column)}
             >
               <h4>{column.label}</h4>
               {column.sortable && (
-                <Fragment>
+                <>
                   {sorting?.direction === 'asc' &&
                     sorting?.column === column.key && (
                       <LuChevronUp></LuChevronUp>
@@ -220,7 +233,7 @@ export default function Table({
                     sorting?.column === column.key && (
                       <LuChevronDown></LuChevronDown>
                     )}
-                </Fragment>
+                </>
               )}
             </button>
           ))}
@@ -265,7 +278,7 @@ export default function Table({
                     type="checkbox"
                     className={styles.checkBox}
                     checked={isItemSelected(item[idKey])}
-                    onChange={(event) => selectItem(event, item[idKey], index)}
+                    onChange={onChangeSelectedItemsHandler(item[idKey], index)}
                   />
                 </div>
                 <div
@@ -287,7 +300,7 @@ export default function Table({
                     <Dropdown
                       label=""
                       dismissOnClick={true}
-                      disabled={areMultipleItemsSelected()}
+                      disabled={areMultipleItemsSelected}
                       renderTrigger={() => (
                         <button
                           type="button"
@@ -301,7 +314,7 @@ export default function Table({
                       {itemActions?.map((itemAction) => (
                         <Dropdown.Item
                           key={itemAction.label}
-                          onClick={() => itemAction.action(item)}
+                          onClick={clickItemActionHandler(itemAction, item)}
                         >
                           {itemAction.label}
                         </Dropdown.Item>

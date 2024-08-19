@@ -22,9 +22,10 @@ export default function Modal({
   useEffect(() => {
     if (isVisible) {
       setTimeout(() => setIsActive(true), 10);
-    } else {
-      setIsActive(false);
+      return;
     }
+
+    setIsActive(false);
   }, [isVisible]);
 
   return (

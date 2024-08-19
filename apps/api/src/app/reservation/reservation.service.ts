@@ -17,7 +17,14 @@ import { Reservation } from './reservation.entity';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { GuestService } from '../guest/guest.service';
 import { RoomService } from '../room/room.service';
-import { format, isBefore } from 'date-fns';
+import {
+  addDays,
+  differenceInDays,
+  format,
+  isBefore,
+  isWithinInterval,
+  nextDay,
+} from 'date-fns';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { ReservationFindParams } from './interfaces/reservation-find-params';
 import { Pagination, paginate } from 'nestjs-typeorm-paginate';
@@ -121,6 +128,7 @@ export class ReservationService {
       roomNumber,
       checkInDate,
       checkOutDate,
+      status,
     } = createReservationDto;
     const reservation = new Reservation();
     let guest = null;
@@ -142,6 +150,7 @@ export class ReservationService {
     reservation.room = room;
     reservation.checkInDate = checkInDate;
     reservation.checkOutDate = checkOutDate;
+    reservation.status = status;
 
     return this.reservationRepository.save(reservation);
   }
@@ -210,5 +219,54 @@ export class ReservationService {
 
   async delete(reservationId: string): Promise<void> {
     await this.reservationRepository.delete(reservationId);
+  }
+
+  async calculateReservationsByDay(
+    calculateReservationsByDayParams
+  ): Promise<any> {
+    const { hotelId, startDate, endDate } = calculateReservationsByDayParams;
+
+    if (!hotelId) {
+      throw new BadRequestException('No hotel provided');
+    }
+
+    if (!startDate || !endDate) {
+      throw new BadRequestException('No valid date range provided');
+    }
+
+    const reservationsInRange = await this.reservationRepository.find({
+      where: {
+        room: {
+          hotel: {
+            id: hotelId,
+          },
+        },
+        checkInDate: LessThan(endDate),
+        checkOutDate: MoreThanOrEqual(startDate),
+      },
+      relations: {
+        room: true,
+      },
+    });
+
+    const dayDifference = differenceInDays(endDate, startDate);
+    const result = {};
+
+    for (let i = 0; i < dayDifference; i++) {
+      const date = addDays(new Date(startDate), i);
+
+      const reservationsOnThatDay = reservationsInRange.filter(
+        (reservation) => {
+          return isWithinInterval(date, {
+            start: new Date(reservation.checkInDate),
+            end: new Date(reservation.checkOutDate),
+          });
+        }
+      ).length;
+
+      result[format(date, 'P')] = reservationsOnThatDay;
+    }
+
+    return result;
   }
 }

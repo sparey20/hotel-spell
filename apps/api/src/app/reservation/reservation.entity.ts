@@ -4,8 +4,6 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
-  JoinTable,
-  ManyToMany,
   ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -13,6 +11,11 @@ import {
 } from 'typeorm';
 import { Room } from '../room/room.entity';
 import { Guest } from '../guest/guest.entity';
+
+export enum ReservationStatus { 
+  CONFIRMED = 'CONFIRMED',
+  CANCELLED = 'CANCELLED',
+}
 
 @Entity({ name: 'Reservation' })
 export class Reservation extends BaseEntity {
@@ -30,6 +33,17 @@ export class Reservation extends BaseEntity {
 
   @UpdateDateColumn()
   updatedDate: string;
+
+  @Column({
+    type: 'enum',
+    enum: ReservationStatus,
+    default: ReservationStatus.CONFIRMED,
+    nullable: false,
+  })
+  status: ReservationStatus;
+
+  @Column({ type: 'boolean', default: false })
+  isCheckedIn: boolean;
 
   @ManyToOne(() => Room)
   @JoinColumn()

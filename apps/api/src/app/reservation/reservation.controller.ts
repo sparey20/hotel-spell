@@ -19,6 +19,19 @@ import {} from 'nestjs-typeorm-paginate';
 export class ReservationController {
   constructor(private reservationService: ReservationService) {}
 
+  @Get('by-day')
+  calculateReservationsByDay(
+    @Query('hotel') hotelId: string,
+    @Query('startDate', new DefaultValuePipe(null)) startDate: string,
+    @Query('endDate', new DefaultValuePipe(null)) endDate: string
+  ) {
+    return this.reservationService.calculateReservationsByDay({
+      hotelId,
+      startDate,
+      endDate,
+    });
+  }
+
   @Get()
   findAll(
     @Query('hotel') hotelId: string,
