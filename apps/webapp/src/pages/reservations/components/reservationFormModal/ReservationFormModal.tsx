@@ -2,7 +2,7 @@ import { IRoom } from '@hotel-spell/api-interfaces';
 import { format } from 'date-fns';
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import Modal from '../../../../components/modal/modal';
+import Modal from '../../../../components/modal/Modal';
 import * as apiReservationService from '../../../../lib/features/reservation/apiReservationService';
 
 export type ReservationFormModalProps = {

@@ -1,3 +1,4 @@
+import { BedConfiguration } from '@hotel-spell/api-interfaces';
 import {
   IsEnum,
   IsNotEmpty,
@@ -5,7 +6,6 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
-import { BedConfiguration } from '../roomType.entity';
 
 export class CreateRoomTypeDto {
   @IsUUID()

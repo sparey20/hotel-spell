@@ -26,6 +26,7 @@
 .buttonIcon {
   @apply rounded-full;
   @apply p-1;
+  @apply text-slate-500;
 
   &:hover {
     @apply bg-slate-100;

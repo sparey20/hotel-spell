@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { BASE_API_PATH } from '../../constants/base-api-path';
+import { BASE_API_PATH } from '../../constants/baseApiPath';
 
 export type GetReservationParams = {
   hotel: string;

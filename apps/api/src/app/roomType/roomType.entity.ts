@@ -12,14 +12,7 @@ import {
 import { Room } from '../room/room.entity';
 import { Amenity } from '../amenities/amenity.entity';
 import { Hotel } from '../hotel/hotel.entity';
-
-export enum BedConfiguration {
-  ONE_QUEEN = 'oneQueen',
-  ONE_KING = 'oneKing',
-  TWO_QUEENS = 'twoQueens',
-  ONE_TWIN = 'oneTwin',
-  TWO_TWINS = 'twoTwins',
-}
+import { BedConfiguration } from '@hotel-spell/api-interfaces';
 
 @Entity({ name: 'RoomType' })
 export class RoomType extends BaseEntity {

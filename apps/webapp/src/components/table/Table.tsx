@@ -1,4 +1,4 @@
-import styles from './table.module.scss';
+import styles from './Table.module.scss';
 import {
   LuChevronDown,
   LuChevronLeft,

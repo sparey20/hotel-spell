@@ -16,7 +16,7 @@ import {
   PointElement,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import NumberStatisticsCard from '../components/numberStatisticsCard/numberStatisticsCard';
+import NumberStatisticsCard from '../components/number-statistics-card/NumberStatisticsCard';
 
 ChartJs.register(
   Tooltip,
@@ -47,7 +47,7 @@ export function Index() {
           isActive: true,
           limit: 1000,
         }),
-        apiRoomService.getRooms({ hotel: hotel?.id as string }),
+        apiRoomService.getRooms({ hotel: hotel?.id as string }) as any,
         apiReservationService.getReservationsByDay({
           hotel: hotel?.id as string,
           startDate: format(subDays(new Date(), 90), 'P'),

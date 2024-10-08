@@ -1,0 +1,67 @@
+.sidePanel {
+  .backdrop {
+    @apply fixed;
+    @apply bg-slate-500/30;
+    @apply top-0;
+    @apply left-0;
+    @apply z-10;
+    @apply w-full;
+    @apply h-full;
+    @apply flex;
+    @apply justify-end;
+    @apply items-center;
+    visibility: hidden;
+
+    &.active {
+      visibility: visible;
+
+      .content {
+        opacity: 1;
+        transform: translateX(0);
+        visibility: visible;
+      }
+    }
+
+    .content {
+      width: 600px;
+      @apply mr-4;
+      @apply h-5/6;
+      @apply rounded-xl;
+      @apply border;
+      @apply bg-white;
+      @apply shadow-md;
+      @apply relative;
+      @apply z-50;
+      @apply flex;
+      @apply flex-col;
+
+      opacity: 0;
+      transform: translateX(100%);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      visibility: hidden;
+
+      .header {
+        @apply flex;
+        @apply flex-row;
+        @apply justify-between;
+        @apply p-4;
+        @apply border-b;
+        @apply text-lg;
+        @apply font-semibold;
+      }
+
+      .body {
+        @apply p-8;
+        @apply flex-1;
+      }
+
+      .footer {
+        @apply flex;
+        @apply flex-row;
+        @apply p-4;
+        @apply border-t;
+        @apply gap-2;
+      }
+    }
+  }
+}

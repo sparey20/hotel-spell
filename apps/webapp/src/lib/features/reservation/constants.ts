@@ -1,4 +1,4 @@
-import { TableColumn } from '../../../components/table/table';
+import { TableColumn } from '../../../components/table/Table';
 import { ReservationActionsTypes } from './enums';
 import {
   ReservationAction,

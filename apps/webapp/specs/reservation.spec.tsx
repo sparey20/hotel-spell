@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/dom';
-import Reservations from '../src/pages/reservations/index';
-import { renderWithProviders } from '../src/lib/utils/test-utils';
+import Reservations from '../src/pages/reservations';
+import { renderWithProviders } from '../src/lib/utils/testUtils';
 import { makeStore } from '../src/lib/store';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';

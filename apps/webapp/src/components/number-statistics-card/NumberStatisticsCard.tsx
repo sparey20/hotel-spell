@@ -1,4 +1,4 @@
-import styles from './numberStatisticsCard.module.scss';
+import styles from './NumberStatisticsCard.module.scss';
 
 type NumberStatisticsCardProps = {
   title: string;

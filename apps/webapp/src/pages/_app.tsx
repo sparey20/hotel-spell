@@ -1,7 +1,7 @@
 import { AppProps } from 'next/app';
 import Head from 'next/head';
-import Header from '../components/header/header';
-import Navigation from '../components/navigation/navigation';
+import Header from '../components/header/Header';
+import Navigation from '../components/navigation/Navigation';
 import { useEffect, useState } from 'react';
 import axios, { AxiosResponse } from 'axios';
 import { IHotel } from '@hotel-spell/api-interfaces';
@@ -11,8 +11,8 @@ import { Provider } from 'react-redux';
 import { wrapper } from '../lib/store';
 import '../styles/main.scss';
 import { Flowbite } from 'flowbite-react';
-import flowbiteTheme from '../lib/flowbite-theme';
-import Toast from '../components/toast/toast';
+import flowbiteTheme from '../lib/flowbiteTheme';
+import Toast from '../components/toast/Toast';
 import * as apiHotelService from '../lib/features/hotel/apiHotelService';
 
 function CustomApp({ Component, pageProps }: AppProps) {

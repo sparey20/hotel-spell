@@ -1,15 +1,17 @@
+import { paginate, Pagination } from 'nestjs-typeorm-paginate';
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { Room } from './room.entity';
 import { UpdateRoomDto } from './dto/update-room.dto';
 import { HotelService } from '../hotel/hotel.service';
 import { RoomTypeService } from '../roomType/roomType.service';
 import { CreateRoomDto } from './dto/create-room.dto';
+import { RoomFindParams } from './interfaces';
 
 @Injectable()
 export class RoomService {
@@ -20,18 +22,45 @@ export class RoomService {
     private hotelService: HotelService
   ) {}
 
-  async findAll(hotelId: string): Promise<Room[]> {
-    return this.roomRepository.find({
-      where: {
-        hotel: {
-          id: hotelId,
-        },
-      },
-      order: {
-        number: 'ASC',
-      },
-      relations: ['roomType'],
-    });
+  async findAll({
+    hotelId,
+    search,
+    sortColumn,
+    sortDirection,
+    page,
+    limit,
+  }: RoomFindParams): Promise<Pagination<Room>> {
+    if (!hotelId) {
+      throw new BadRequestException('No hotel provided');
+    }
+
+    try {
+      return paginate(
+        this.roomRepository,
+        { page, limit },
+        {
+          where: {
+            hotel: {
+              id: hotelId,
+            },
+            ...(search && !isNaN(Number(search))
+              ? { number: Number(search) }
+              : {}),
+          },
+          order: {
+            ...(sortColumn
+              ? { [sortColumn]: sortDirection?.toUpperCase() ?? 'ASC' }
+              : {}),
+            id: 'ASC',
+          },
+          relations: {
+            roomType: true,
+          },
+        }
+      );
+    } catch (error) {
+      throw new BadRequestException();
+    }
   }
 
   async findOne(id: string): Promise<Room> {

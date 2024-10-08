@@ -1,5 +1,6 @@
-import axios from 'axios';
-import { BASE_API_PATH } from '../../constants/base-api-path';
+import axios, { AxiosResponse } from 'axios';
+import { BASE_API_PATH } from '../../constants/baseApiPath';
+import { IAPIListView, ICreateRoomDTO, IRoom } from '@hotel-spell/api-interfaces';
 
 const apiRoomsPrefix = `${BASE_API_PATH}/api/rooms`;
 
@@ -7,6 +8,19 @@ export type GetRoomsParams = {
   hotel: string;
 };
 
-export const getRooms = (params: GetRoomsParams) => {
+export const getRooms = (
+  params: GetRoomsParams
+): Promise<AxiosResponse<IAPIListView<IRoom>>> => {
   return axios.get(apiRoomsPrefix, { params });
+};
+
+export const createRoom = (
+  createRoomDTO: ICreateRoomDTO
+): Promise<AxiosResponse<IRoom>> => {
+  return axios.post(apiRoomsPrefix, createRoomDTO);
+};
+
+
+export const deleteRoom = (id: string): Promise<AxiosResponse<void>> => {
+  return axios.delete(`${apiRoomsPrefix}/${id}`);
 };

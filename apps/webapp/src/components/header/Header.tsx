@@ -1,6 +1,6 @@
 import { Tooltip } from 'flowbite-react';
 import { useAppSelector } from '../../lib/hooks';
-import styles from './header.module.scss';
+import styles from './Header.module.scss';
 import { LuWand2, LuUser } from 'react-icons/lu';
 
 export default function Header() {

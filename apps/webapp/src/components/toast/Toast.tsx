@@ -1,4 +1,4 @@
-import styles from './toast.module.scss';
+import styles from './Toast.module.scss';
 import { IoCloseOutline } from 'react-icons/io5';
 import { useAppDispatch, useAppSelector } from '../../lib/hooks';
 import toastSlice from '../../lib/features/toast/toastSlice';

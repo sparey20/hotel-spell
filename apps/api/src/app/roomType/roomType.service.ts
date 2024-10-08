@@ -20,7 +20,9 @@ export class RoomTypeService {
   async findOne(id: string): Promise<RoomType> {
     const roomType = await this.roomTypeRepository.findOne({
       where: { id },
-      relations: ['amenities'],
+      relations: {
+        amenities: true,
+      },
     });
 
     if (!roomType) {
@@ -37,7 +39,9 @@ export class RoomTypeService {
           id: hotelId,
         },
       },
-      relations: ['rooms', 'amenity'],
+      relations: {
+        amenities: true
+      },
     });
   }
 

@@ -1,8 +1,13 @@
-import { IHotel, IReservation } from '@hotel-spell/api-interfaces';
+import {
+  IAPIListView,
+  IHotel,
+  IReservation,
+  IRoom,
+} from '@hotel-spell/api-interfaces';
 import axios, { AxiosResponse } from 'axios';
 import { Fragment, useEffect, useMemo, useReducer, useRef } from 'react';
 import styles from './index.module.scss';
-import Table from '../../components/table/table';
+import Table from '../../components/table/Table';
 import { SubmitHandler } from 'react-hook-form';
 import { useAppDispatch, useAppSelector } from '../../lib/hooks';
 import {
@@ -12,8 +17,8 @@ import {
 } from '../../lib/features/reservation/constants';
 import { ReservationActionsTypes } from '../../lib/features/reservation/enums';
 import { ReservationTableItem } from '../../lib/features/reservation/types';
-import Search from '../../components/search/search';
-import ReservationFormModal from './components/reservationFormModal/reservationFormModal';
+import Search from '../../components/search/Search';
+import ReservationFormModal from './components/reservationFormModal/ReservationFormModal';
 import * as apiReservationService from '../../lib/features/reservation/apiReservationService';
 import * as apiRoomService from '../../lib/features/room/apiRoomService';
 import { showToastWithTimeout } from '../../lib/features/toast/toastSlice';
@@ -89,7 +94,7 @@ export default function Reservations(props: ReservationProps) {
           sortColumn: sorting.column,
           sortDirection: sorting.direction,
         }),
-        apiRoomService.getRooms({ hotel: hotel?.id as string }),
+        apiRoomService.getRooms({ hotel: hotel?.id as string }) as any,
       ])
       .then(
         axios.spread((reservationResponse, roomsResponse) => {
@@ -103,7 +108,7 @@ export default function Reservations(props: ReservationProps) {
                 reservations: mapReservationsToTableViewItems(
                   reservationResponse.data.items
                 ),
-                rooms: roomsResponse.data,
+                rooms: roomsResponse.data.items,
                 pagination: reservationResponse.data.meta,
               },
             },

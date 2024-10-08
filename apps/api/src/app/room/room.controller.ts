@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -17,8 +19,22 @@ export class RoomController {
   constructor(private roomService: RoomService) {}
 
   @Get()
-  findAll(@Query('hotel') hotelId: string) {
-    return this.roomService.findAll(hotelId);
+  findAll(
+    @Query('hotel') hotelId: string,
+    @Query('search', new DefaultValuePipe('')) search: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit = 10,
+    @Query('sortDirection', new DefaultValuePipe('')) sortDirection,
+    @Query('sortColumn', new DefaultValuePipe(null)) sortColumn
+  ) {
+    return this.roomService.findAll({
+      hotelId,
+      search,
+      page,
+      limit,
+      sortDirection,
+      sortColumn,
+    });
   }
 
   @Get(':id')

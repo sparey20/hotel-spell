@@ -1,5 +1,5 @@
 import { KeyboardEventHandler, useState } from 'react';
-import styles from './search.module.scss';
+import styles from './Search.module.scss';
 import { LuSearch } from 'react-icons/lu';
 
 type SearchProps = {

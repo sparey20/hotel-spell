@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import styles from './modal.module.scss';
+import styles from './SidePanel.module.scss';
 import { IoCloseOutline } from 'react-icons/io5';
 
-type ModalProps = {
+type SidePanelProps = {
   isVisible: boolean;
   header?: string;
   onClose?: () => void;
@@ -10,13 +10,13 @@ type ModalProps = {
   children?: string | JSX.Element | JSX.Element[];
 };
 
-export default function Modal({
+export default function SidePanel({
   header,
   onClose,
   onConfirm,
   children,
   isVisible,
-}: ModalProps) {
+}: SidePanelProps) {
   const [isActive, setIsActive] = useState(false);
 
   useEffect(() => {
@@ -30,25 +30,23 @@ export default function Modal({
 
   return (
     isVisible && (
-      <section className={styles.modal}>
+      <section className={styles.sidePanel}>
         <section
-          className={`${styles.modalBackdrop} ${
-            isActive ? `${styles.active}` : ''
-          }`}
+          className={`${styles.backdrop} ${isActive ? `${styles.active}` : ''}`}
           onClick={onClose}
         >
           <section
-            className={styles.modalContent}
+            className={styles.content}
             onClick={(event) => event.stopPropagation()}
           >
-            <header className={styles.modalHeader}>
+            <header className={styles.header}>
               <h3>{header}</h3>
               <button className="buttonIcon" onClick={onClose}>
                 <IoCloseOutline className="text-xl" />
               </button>
             </header>
-            <section className={styles.modalBody}>{children}</section>
-            <footer className={styles.modalFooter}>
+            <section className={styles.body}>{children}</section>
+            <footer className={styles.footer}>
               <button
                 className="buttonDefault flex justify-center items-center flex-1"
                 onClick={onClose}

@@ -1,5 +1,5 @@
+import { BedConfiguration } from '@hotel-spell/api-interfaces';
 import { IsArray, IsEnum, IsNumber, IsString, IsUUID } from 'class-validator';
-import { BedConfiguration } from '../roomType.entity';
 
 export class UpdateRoomTypeDto {
   @IsString()
