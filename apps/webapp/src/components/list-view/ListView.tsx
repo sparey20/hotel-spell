@@ -23,175 +23,49 @@ interface ListComponentProps<T> {
     columns: ListViewTableColumn[];
     itemActions: ItemAction[];
   };
+  isLoading: boolean;
+  data: IAPIListView<T>;
+  goToPageHandler: (currentPage: number) => void;
+  sortColumnHandler: (column: string, direction: 'asc' | 'desc') => void;
+  searchItemsHandler: (search: string) => void;
   createItemHandler: () => void;
-  fetchDataRequest: (params: any) => Promise<AxiosResponse<IAPIListView<any>>>;
-  deleteItemRequest: (id: string) => Promise<AxiosResponse<void>>;
-  mapDataToTableItems: (data: T[]) => any[];
 }
 
 const ListViewComponent = <T,>({
   entityName,
   config: { rowLimit, columns, itemActions },
-  fetchDataRequest,
-  deleteItemRequest,
-  mapDataToTableItems,
+  data: { items, meta },
+  isLoading,
+  goToPageHandler,
+  sortColumnHandler,
+  searchItemsHandler,
   createItemHandler,
 }: ListComponentProps<T>) => {
-  console.log('list view component');
-  const dispatch = useAppDispatch();
   const defaultColumn = columns.find((column) => column.sorting?.isDefault);
-  const [listViewState, dispatchListView] = useReducer(LIST_VIEW_REDUCER, {
-    loading: true,
-    error: false,
-    search: '',
-    sorting: {
-      column: defaultColumn?.key || '',
-      direction: defaultColumn?.sorting?.direction || 'asc',
-    },
-    data: {
-      items: [],
-      pagination: {
-        totalItems: 0,
-        itemCount: 0,
-        itemsPerPage: rowLimit,
-        totalPages: 0,
-        currentPage: 1,
-      },
-    },
-  } as ListViewState);
-
-  const {
-    loading,
-    search,
-    data: { items, pagination },
-    sorting,
-  } = listViewState;
-
-  const getInitialListViewData = () => {
-    dispatchListView({
-      type: ListViewActionsTypes.FetchInit,
-      payload: listViewState,
-    });
-
-    fetchDataRequest({
-      limit: rowLimit,
-      sortColumn: sorting.column,
-      sortDirection: sorting.direction,
-    })
-      .then(({ data: { items, meta } }) => {
-        dispatchListView({
-          type: ListViewActionsTypes.FetchSuccess,
-          payload: {
-            ...listViewState,
-            loading: false,
-            error: false,
-            data: {
-              items: mapDataToTableItems(items),
-              pagination: {
-                totalItems: meta.totalItems,
-                itemCount: meta.itemCount,
-                itemsPerPage: meta.itemsPerPage,
-                totalPages: meta.totalPages,
-                currentPage: meta.currentPage,
-              },
-            },
-          },
-        });
-      })
-      .catch((error) => {
-        dispatchListView({
-          type: ListViewActionsTypes.FetchFailure,
-          payload: listViewState,
-        });
-        dispatch(
-          showToastWithTimeout({
-            message: 'Failed requesting data.',
-            type: 'error',
-          }) as any
-        );
-      });
-  };
-
-  const getListViewData = ({
-    page = pagination.currentPage,
-    sortColumn = sorting.column,
-    sortDirection = sorting.direction,
-  }) => {
-    fetchDataRequest({
-      limit: rowLimit,
-      sortColumn,
-      sortDirection,
-      page,
-      search,
-    }).then(({ data: { meta, items } }) => {
-      dispatchListView({
-        type: ListViewActionsTypes.FetchSuccess,
-        payload: {
-          ...listViewState,
-          loading: false,
-          error: false,
-          sorting: {
-            column: sortColumn,
-            direction: sortDirection,
-          },
-          data: {
-            ...listViewState.data,
-            items: mapDataToTableItems(items),
-            pagination: meta,
-          },
-        },
-      });
-    });
-  };
+  const [sorting, setSorting] = useState<{
+    column: string;
+    direction: 'asc' | 'desc';
+  }>({
+    column: defaultColumn?.key || '',
+    direction: defaultColumn?.sorting?.direction || 'asc',
+  });
 
   const goToNextPage = () => {
-    getListViewData({ page: pagination.currentPage + 1 });
+    goToPageHandler(meta.currentPage + 1);
   };
 
   const goToPreviousPage = () => {
-    getListViewData({ page: pagination.currentPage - 1 });
+    goToPageHandler(meta.currentPage - 1);
   };
 
   const sortColumn = (column: string, direction: 'asc' | 'desc') => {
-    getListViewData({ sortColumn: column, sortDirection: direction });
+    setSorting({ column, direction });
+    sortColumnHandler(column, direction);
   };
 
   const searchItems = (search: string) => {
-    fetchDataRequest({
-      limit: rowLimit,
-      sortColumn: sorting.column,
-      sortDirection: sorting.direction,
-      search,
-    })
-      .then(({ data: { meta, items } }) => {
-        dispatchListView({
-          type: ListViewActionsTypes.FetchSuccess,
-          payload: {
-            ...listViewState,
-            loading: false,
-            error: false,
-            search,
-            data: {
-              ...listViewState.data,
-              items: mapDataToTableItems(items),
-              pagination: meta,
-            },
-          },
-        });
-      })
-      .catch((error) => {
-        dispatch(
-          showToastWithTimeout({
-            message: 'Failed getting items.',
-            type: 'error',
-          }) as any
-        );
-      });
+    searchItemsHandler(search);
   };
-
-  useEffect(() => {
-    getInitialListViewData();
-  }, []);
 
   return (
     <section className={styles.listView}>
@@ -208,12 +82,12 @@ const ListViewComponent = <T,>({
       </section>
       <section className={styles.tableContainer}>
         <Table
-          items={items as ListViewItem[]}
+          items={items as any[]}
           idKey="id"
           columns={columns}
           itemActions={itemActions}
-          isLoading={loading}
-          pagination={{ ...pagination, goToNextPage, goToPreviousPage }}
+          isLoading={isLoading}
+          pagination={{ ...meta, goToNextPage, goToPreviousPage }}
           sorting={{ ...sorting, sortColumn }}
         ></Table>
       </section>

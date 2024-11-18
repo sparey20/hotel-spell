@@ -4,6 +4,7 @@ import * as apiRoomTypeService from '../../lib/features/roomType/apiRoomTypeServ
 import { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../lib/hooks';
 import {
+  IAPIListView,
   ICreateRoomDTO,
   IHotel,
   IRoom,
@@ -17,12 +18,24 @@ import {
 import ListView from '../../components/list-view/ListView';
 import SidePanel from '../../components/list-view/SidePanel';
 import { set, useForm } from 'react-hook-form';
+import axios, { AxiosResponse } from 'axios';
 
 export default function RoomsComponent() {
   const { hotel } = useAppSelector((state) => state.hotel) as {
     hotel: IHotel | null;
   };
   const [isSidePanelVisible, setIsSidePanelVisible] = useState(false);
+  const [roomData, setRoomData] = useState<IAPIListView<ListViewItem>>({
+    items: [],
+    meta: {
+      totalItems: 0,
+      itemCount: 20,
+      itemsPerPage: 0,
+      totalPages: 0,
+      currentPage: 1,
+    },
+  });
+  const [isLoading, setIsLoading] = useState(true);
   const { register, handleSubmit, reset, getValues, trigger, formState } =
     useForm<any>({
       mode: 'onBlur',
@@ -84,14 +97,6 @@ export default function RoomsComponent() {
     setIsSidePanelVisible(false);
   };
 
-  const fetchDataRequest = (params: any) =>
-    apiRoomService.getRooms({
-      hotel: hotel?.id as string,
-      ...params,
-    });
-
-  const deleteDataRequest = apiRoomService.deleteRoom;
-
   const mapDataToTableItems = useMemo(
     () =>
       (rooms: IRoom[]): ListViewItem[] =>
@@ -107,6 +112,54 @@ export default function RoomsComponent() {
     console.log('delete item', item);
   };
 
+  const goToPageHandler = (currentPage: number) => {
+    apiRoomService
+      .getRooms({
+        hotel: hotel?.id as string,
+        page: currentPage,
+        limit: tableConfig.rowLimit,
+      })
+      .then(({ data }) => {
+        setRoomData({
+          ...data,
+          items: mapDataToTableItems(data.items),
+        });
+      });
+  };
+
+  const sortColumnHandler = (column: string, direction: 'asc' | 'desc') => {
+    apiRoomService
+      .getRooms({
+        hotel: hotel?.id as string,
+        page: roomData.meta.currentPage,
+        sortColumn: column,
+        sortDirection: direction,
+        limit: tableConfig.rowLimit,
+      })
+      .then(({ data }) => {
+        setRoomData({
+          ...data,
+          items: mapDataToTableItems(data.items),
+        });
+      });
+  };
+
+  const searchItemsHandler = (search: string) => {
+    apiRoomService
+      .getRooms({
+        hotel: hotel?.id as string,
+        page: roomData.meta.currentPage,
+        search: search,
+        limit: tableConfig.rowLimit,
+      })
+      .then(({ data }) => {
+        setRoomData({
+          ...data,
+          items: mapDataToTableItems(data.items),
+        });
+      });
+  };
+
   useEffect(() => {
     if (formState.isSubmitSuccessful) {
       reset();
@@ -114,11 +167,26 @@ export default function RoomsComponent() {
   }, [formState]);
 
   useEffect(() => {
-    if (hotel) {
-      apiRoomTypeService
-        .getRoomTypes({ hotel: hotel.id as string })
-        .then(({ data }) => setRoomTypes(data));
+    if (!hotel) {
+      return;
     }
+
+    Promise.all([
+      apiRoomTypeService.getRoomTypes({ hotel: hotel.id as string }),
+      apiRoomService.getRooms({
+        hotel: hotel?.id as string,
+        page: 1,
+        limit: tableConfig.rowLimit,
+      }),
+    ]).then(([roomTypesResponse, roomDataResponse]) => {
+      setRoomTypes(roomTypesResponse.data);
+      setRoomData({
+        ...roomDataResponse.data,
+        items: mapDataToTableItems(roomDataResponse.data.items),
+      });
+
+      setIsLoading(false);
+    });
   }, []);
 
   return (
@@ -126,9 +194,11 @@ export default function RoomsComponent() {
       <ListView
         entityName="Rooms"
         config={tableConfig}
-        fetchDataRequest={fetchDataRequest}
-        deleteItemRequest={deleteDataRequest}
-        mapDataToTableItems={mapDataToTableItems}
+        isLoading={isLoading}
+        data={roomData}
+        goToPageHandler={goToPageHandler}
+        sortColumnHandler={sortColumnHandler}
+        searchItemsHandler={searchItemsHandler}
         createItemHandler={openSidePanel}
       ></ListView>
       <SidePanel

@@ -40,9 +40,9 @@ export type ListViewState = {
   loading: boolean;
   error: boolean;
   search: string;
+  currentPage: number;
   sorting: {
     column: string;
     direction: 'asc' | 'desc';
   };
-  data: ListViewStateData;
 };
