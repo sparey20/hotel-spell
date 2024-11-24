@@ -4,12 +4,12 @@ import { IRoomType } from '@hotel-spell/api-interfaces';
 
 const apiRoomsPrefix = `${BASE_API_PATH}/api/roomTypes`;
 
-export type GetRoomsParams = {
+export type GetRoomsTypesParams = {
   hotel: string;
 };
 
 export const getRoomTypes = (
-  params: GetRoomsParams
+  params: GetRoomsTypesParams
 ): Promise<AxiosResponse<IRoomType[]>> => {
   return axios.get(apiRoomsPrefix, { params });
 };

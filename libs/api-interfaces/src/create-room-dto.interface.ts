@@ -5,3 +5,9 @@ export interface ICreateRoomDTO {
 	status: RoomStatus;
 	roomTypeId: string;
 }
+
+export interface IUpdateRoomDTO {
+  number: number;
+  status: RoomStatus;
+  roomTypeId: string;
+}

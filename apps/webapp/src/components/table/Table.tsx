@@ -40,6 +40,7 @@ export type TableColumn = {
   label: string;
   key: string;
   size: number;
+  transform?: (value: any) => string;
 };
 
 const columnWidthClassMapping: Record<string, string> = {
@@ -291,7 +292,7 @@ export default function Table({
                       className="flex justify-center"
                       key={`${item[idKey]}-${column.key}`}
                     >
-                      {item[column.key]}
+                      {column.transform ? column.transform(item) : item[column.key]}
                     </div>
                   ))}
                 </div>

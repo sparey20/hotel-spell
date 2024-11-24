@@ -8,18 +8,14 @@ import styles from './ListView.module.scss';
 import { LIST_VIEW_REDUCER } from './constants';
 import {
   ItemAction,
-  ListViewItem,
-  ListViewState,
   ListViewTableColumn,
 } from './types';
-import { ListViewActionsTypes } from './enums';
 import { IAPIListView } from '@hotel-spell/api-interfaces';
 import { LuPlus } from 'react-icons/lu';
 
 interface ListComponentProps<T> {
   entityName: string;
   config: {
-    rowLimit: number;
     columns: ListViewTableColumn[];
     itemActions: ItemAction[];
   };
@@ -33,7 +29,7 @@ interface ListComponentProps<T> {
 
 const ListViewComponent = <T,>({
   entityName,
-  config: { rowLimit, columns, itemActions },
+  config: { columns, itemActions },
   data: { items, meta },
   isLoading,
   goToPageHandler,

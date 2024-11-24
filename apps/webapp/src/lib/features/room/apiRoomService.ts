@@ -4,6 +4,7 @@ import {
   IAPIListView,
   ICreateRoomDTO,
   IRoom,
+  IUpdateRoomDTO,
 } from '@hotel-spell/api-interfaces';
 
 const apiRoomsPrefix = `${BASE_API_PATH}/api/rooms`;
@@ -27,6 +28,13 @@ export const createRoom = (
   createRoomDTO: ICreateRoomDTO
 ): Promise<AxiosResponse<IRoom>> => {
   return axios.post(apiRoomsPrefix, createRoomDTO);
+};
+
+export const editRoom = (
+  id: string,
+  updateRoomDTO: IUpdateRoomDTO
+): Promise<AxiosResponse<IRoom>> => {
+  return axios.patch(`${apiRoomsPrefix}/${id}`, updateRoomDTO);
 };
 
 export const deleteRoom = (id: string): Promise<AxiosResponse<void>> => {
