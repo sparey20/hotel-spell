@@ -1,5 +1,6 @@
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { BASE_API_PATH } from '../../constants/baseApiPath';
+import { IAPIListView, IReservation } from '@hotel-spell/api-interfaces';
 
 export type GetReservationParams = {
   hotel: string;
@@ -12,13 +13,12 @@ export type GetReservationParams = {
 };
 
 export type ReservationDTO = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  roomNumber: number;
-  checkInDate: string;
-  checkOutDate: string;
-  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  roomNumber: number | null;
+  checkInDate: string | null;
+  checkOutDate: string | null;
 };
 
 export type GetReservationByDayParams = {
@@ -29,7 +29,7 @@ export type GetReservationByDayParams = {
 
 const reservationApiPrefix = `${BASE_API_PATH}/api/reservations`;
 
-export const getReservations = (params: GetReservationParams) => {
+export const getReservations = (params: GetReservationParams): Promise<AxiosResponse<IAPIListView<IReservation>>> => {
   return axios.get(reservationApiPrefix, { params });
 };
 

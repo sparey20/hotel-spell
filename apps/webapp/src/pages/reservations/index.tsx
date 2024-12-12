@@ -1,417 +1,511 @@
+import styles from './index.module.scss';
+import * as apiRoomService from '../../lib/features/room/apiRoomService';
+import { useEffect, useReducer, useState } from 'react';
+import { useAppDispatch, useAppSelector } from '../../lib/hooks';
 import {
   IAPIListView,
   IHotel,
   IReservation,
   IRoom,
 } from '@hotel-spell/api-interfaces';
-import axios, { AxiosResponse } from 'axios';
-import { Fragment, useEffect, useMemo, useReducer, useRef } from 'react';
-import styles from './index.module.scss';
-import Table from '../../components/table/Table';
-import { SubmitHandler } from 'react-hook-form';
-import { useAppDispatch, useAppSelector } from '../../lib/hooks';
 import {
-  RESERVATION_COLUMNS,
-  RESERVATION_ITEMS_PER_PAGE,
-  RESERVATION_REDUCER,
-} from '../../lib/features/reservation/constants';
-import { ReservationActionsTypes } from '../../lib/features/reservation/enums';
-import { ReservationTableItem } from '../../lib/features/reservation/types';
-import Search from '../../components/search/Search';
-import ReservationFormModal from './components/reservationFormModal/ReservationFormModal';
-import * as apiReservationService from '../../lib/features/reservation/apiReservationService';
-import * as apiRoomService from '../../lib/features/room/apiRoomService';
+  ItemAction,
+  ListViewTableColumn,
+} from '../../components/list-view/types';
+import ListView from '../../components/list-view/ListView';
+import SidePanel from '../../components/list-view/SidePanel';
+import { useForm } from 'react-hook-form';
 import { showToastWithTimeout } from '../../lib/features/toast/toastSlice';
+import * as apiReservationService from '../../lib/features/reservation/apiReservationService';
+import { format } from 'date-fns';
 
-/* eslint-disable-next-line */
-type ReservationProps = {};
+interface ReservationsPageState {
+  reservations: IAPIListView<IReservation>;
+  isLoading: boolean;
+  rooms: IRoom[];
+}
 
-export default function Reservations(props: ReservationProps) {
-  const reservationFormModalRef = useRef();
+enum ReservationsPageActionTypes {
+  pageLoad = 'PAGE_LOAD',
+  updateReservationsListView = 'UPDATE_RESERVATIONS_LIST_VIEW',
+}
+
+interface ReservationFormData {
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  roomNumber: number | null;
+  checkInDate: string | null;
+  checkOutDate: string | null;
+  id?: string;
+}
+
+type ReservationsPageAction =
+  | {
+      type: ReservationsPageActionTypes.pageLoad;
+      payload: { reservations: IAPIListView<IReservation>; rooms: IRoom[] };
+    }
+  | {
+      type: ReservationsPageActionTypes.updateReservationsListView;
+      payload: { reservations: IAPIListView<IReservation> };
+    };
+
+const roomsPageReducerMap = new Map<
+  ReservationsPageActionTypes,
+  (
+    state: ReservationsPageState,
+    action: ReservationsPageAction
+  ) => ReservationsPageState
+>([
+  [
+    ReservationsPageActionTypes.pageLoad,
+    (
+      state: ReservationsPageState,
+      action: ReservationsPageAction
+    ): ReservationsPageState =>
+      action.type === ReservationsPageActionTypes.pageLoad
+        ? {
+            reservations: action.payload.reservations,
+            rooms: action.payload.rooms,
+            isLoading: false,
+          }
+        : state,
+  ],
+  [
+    ReservationsPageActionTypes.updateReservationsListView,
+    (state: ReservationsPageState, action: ReservationsPageAction) =>
+      action.type === ReservationsPageActionTypes.updateReservationsListView
+        ? {
+            ...state,
+            reservations: action.payload.reservations,
+            isLoading: false,
+          }
+        : state,
+  ],
+]);
+
+const reservationsPageReducer = (
+  state: ReservationsPageState,
+  action: ReservationsPageAction
+): ReservationsPageState => {
+  const mappedAction = roomsPageReducerMap.get(action.type);
+
+  if (!mappedAction) {
+    return state;
+  }
+
+  return mappedAction(state, action);
+};
+
+const listViewItemPerPage = 20;
+
+const initialPageState: ReservationsPageState = {
+  reservations: {
+    items: [],
+    meta: {
+      totalItems: 0,
+      itemCount: listViewItemPerPage,
+      itemsPerPage: 0,
+      totalPages: 0,
+      currentPage: 1,
+    },
+  },
+  isLoading: true,
+  rooms: [],
+};
+
+export default function ReservationsComponent() {
+  const today = format(new Date(), 'yyyy-MM-dd');
   const { hotel } = useAppSelector((state) => state.hotel) as {
     hotel: IHotel | null;
   };
+
+  let reservationDataQueryParams: apiReservationService.GetReservationParams = {
+    hotel: hotel?.id as string,
+    page: 1,
+    sortColumn: 'checkInDate',
+    sortDirection: 'desc',
+    limit: listViewItemPerPage,
+    search: '',
+  };
+
   const dispatch = useAppDispatch();
-  const [reservationPage, dispatchReservations] = useReducer(
-    RESERVATION_REDUCER,
-    {
-      loading: true,
-      error: false,
-      search: '',
-      sorting: {
-        column: 'checkOutDate',
-        direction: 'desc',
-      },
-      data: {
-        reservations: [],
-        rooms: [],
-        pagination: {
-          totalItems: 0,
-          itemCount: 0,
-          itemsPerPage: RESERVATION_ITEMS_PER_PAGE,
-          totalPages: 0,
-          currentPage: 1,
-        },
-      },
-    }
+
+  const [reservationsPageState, reservationsPageDispatch] = useReducer(
+    reservationsPageReducer,
+    initialPageState
   );
-  const { pagination, reservations, rooms } = reservationPage.data;
-  const { loading, sorting } = reservationPage;
-  const reservationTableActions = [
-    {
-      label: 'Edit',
-      action: (item: any) => {
-        openReservationModal({
-          id: item.id,
-          firstName: item.guestFirstName,
-          lastName: item.guestLastName,
-          email: item.guestEmail,
-          roomNumber: item.roomNumber,
-          checkInDate: item.checkInDate,
-          checkOutDate: item.checkOutDate,
-        });
-      },
-    },
-    {
-      label: 'Delete',
-      action: (item: any) => {
-        deleteReservation(item);
-      },
-    },
-  ];
 
-  const getInitialReservationLoadData = () => {
-    dispatchReservations({
-      type: ReservationActionsTypes.ReservationFetchInit,
-      payload: reservationPage,
+  const [isSidePanelVisible, setIsSidePanelVisible] = useState(false);
+  const { register, handleSubmit, reset, getValues, trigger, formState } =
+    useForm<ReservationFormData>({
+      mode: 'onBlur',
+      defaultValues: {
+        firstName: null,
+        lastName: null,
+        email: null,
+        roomNumber: null,
+        checkInDate: null,
+        checkOutDate: null,
+      },
     });
 
-    axios
-      .all([
-        apiReservationService.getReservations({
-          hotel: hotel?.id as string,
-          limit: RESERVATION_ITEMS_PER_PAGE,
-          sortColumn: sorting.column,
-          sortDirection: sorting.direction,
-        }),
-        apiRoomService.getRooms({ hotel: hotel?.id as string }) as any,
-      ])
-      .then(
-        axios.spread((reservationResponse, roomsResponse) => {
-          dispatchReservations({
-            type: ReservationActionsTypes.ReservationFetchSuccess,
-            payload: {
-              ...reservationPage,
-              loading: false,
-              error: false,
-              data: {
-                reservations: mapReservationsToTableViewItems(
-                  reservationResponse.data.items
-                ),
-                rooms: roomsResponse.data.items,
-                pagination: reservationResponse.data.meta,
-              },
-            },
-          });
-        }),
-        (error) => {
-          dispatchReservations({
-            type: ReservationActionsTypes.ReservationFetchFailure,
-            payload: reservationPage,
-          });
-          dispatch(
-            showToastWithTimeout({
-              message: 'Failed requesting reservations.',
-              type: 'error',
-            }) as any
-          );
-        }
-      );
+  const tableConfig = {
+    columns: [
+      {
+        sortable: false,
+        label: 'First Name',
+        key: 'guestFirstName',
+        size: 2,
+        transform: (reservation: IReservation) => reservation.guest.firstName
+      },
+      {
+        sortable: false,
+        label: 'Last Name',
+        key: 'guestLastName',
+        size: 2,
+        transform: (reservation: IReservation) => reservation.guest.lastName
+      },
+      {
+        sortable: true,
+        label: 'Check In',
+        key: 'checkInDate',
+        size: 2,
+      },
+      {
+        sortable: true,
+        label: 'Check Out',
+        key: 'checkOutDate',
+        size: 2,
+      },
+      {
+        sortable: false,
+        label: 'Room',
+        key: 'roomNumber',
+        size: 2,
+        transform: (reservation: IReservation) => reservation.room.number
+      },
+    ] as ListViewTableColumn[],
+    itemActions: [
+      {
+        label: 'Edit',
+        action: (reservation: IReservation) => editReservation(reservation),
+      },
+      {
+        label: 'Cancel',
+        action: (reservation: IReservation) => cancelReservation(reservation),
+      },
+    ] as ItemAction[],
   };
 
-  const getReservations = ({
-    page = pagination.currentPage,
-    search = reservationPage.search,
-    sortColumn = sorting.column,
-    sortDirection = sorting.direction,
-  }) => {
-    apiReservationService
-      .getReservations({
-        hotel: hotel?.id as string,
-        limit: RESERVATION_ITEMS_PER_PAGE,
-        search,
-        page,
-        sortColumn,
-        sortDirection,
-      })
-      .then((reservationResponse) => {
-        dispatchReservations({
-          type: ReservationActionsTypes.ReservationFetchSuccess,
-          payload: {
-            ...reservationPage,
-            loading: false,
-            error: false,
-            sorting: {
-              column: sortColumn,
-              direction: sortDirection,
-            },
-            data: {
-              ...reservationPage.data,
-              reservations: mapReservationsToTableViewItems(
-                reservationResponse.data.items
-              ),
-              pagination: reservationResponse.data.meta,
-            },
-          },
-        });
-      });
-  };
-
-  const createReservationClickHandler = () => {
-    openReservationModal();
-  };
-
-  const openReservationModal = (formData: any = null) => {
-    (reservationFormModalRef as any)?.current?.openReservationModal(formData);
-  };
-
-  const searchReservations = (search: string) => {
-    apiReservationService
-      .getReservations({
-        hotel: hotel?.id as string,
-        search,
-        limit: RESERVATION_ITEMS_PER_PAGE,
-        sortColumn: sorting.column,
-        sortDirection: sorting.direction,
-      })
-      .then((reservationResponse) => {
-        dispatchReservations({
-          type: ReservationActionsTypes.ReservationFetchSuccess,
-          payload: {
-            ...reservationPage,
-            loading: false,
-            error: false,
-            search,
-            data: {
-              ...reservationPage.data,
-              reservations: mapReservationsToTableViewItems(
-                reservationResponse.data.items
-              ),
-              pagination: reservationResponse.data.meta,
-            },
-          },
-        });
-      })
-      .catch((error) => {
-        dispatch(
-          showToastWithTimeout({
-            message: 'Failed getting reservations.',
-            type: 'error',
-          }) as any
-        );
-      });
-  };
-
-  const createReservation = (
-    reservationForm: apiReservationService.ReservationDTO
-  ): void => {
-    apiReservationService
-      .createReservation(reservationForm)
-      .then(({ data }: AxiosResponse<IReservation>) => {
-        const { id, guest, room, checkInDate, checkOutDate } = data;
-        dispatchReservations({
-          type: ReservationActionsTypes.AddReservation,
-          payload: {
-            ...reservationPage,
-            data: {
-              ...reservationPage.data,
-              reservations: {
-                id,
-                guestFirstName: guest.firstName,
-                guestLastName: guest.lastName,
-                guestEmail: guest.email,
-                roomNumber: room.number,
-                checkInDate,
-                checkOutDate,
-              },
-            },
-          },
-        });
-        dispatch(
-          showToastWithTimeout({
-            message: `Created reservation for ${guest.firstName} ${guest.lastName}.`,
-            type: 'success',
-          }) as any
-        );
-      })
-      .catch((error) => {
-        dispatch(
-          showToastWithTimeout({
-            message: 'Failed creating reservation.',
-            type: 'error',
-          }) as any
-        );
-      });
-  };
-
-  const editReservation = (
-    reservationForm: apiReservationService.ReservationDTO
-  ): void => {
-    apiReservationService
-      .updateReservation(reservationForm.id, reservationForm)
-      .then(({ data }: AxiosResponse<IReservation>) => {
-        const { id, guest, room, checkInDate, checkOutDate } = data;
-        dispatchReservations({
-          type: ReservationActionsTypes.UpdateReservation,
-          payload: {
-            ...reservationPage,
-            data: {
-              ...reservationPage.data,
-              reservations: {
-                id,
-                guestFirstName: guest.firstName,
-                guestLastName: guest.lastName,
-                guestEmail: guest.email,
-                roomNumber: room.number,
-                checkInDate,
-                checkOutDate,
-              },
-            },
-          },
-        });
-      })
-      .catch((error) => {
-        dispatch(
-          showToastWithTimeout({
-            message: 'Failed editing reservation.',
-            type: 'error',
-          }) as any
-        );
-      });
-  };
-
-  const deleteReservation = (reservation: ReservationTableItem) => {
-    apiReservationService
-      .deleteReservation(reservation.id)
-      .then(() => {
-        dispatchReservations({
-          type: ReservationActionsTypes.RemoveReservation,
-          payload: {
-            ...reservationPage,
-            loading: false,
-            error: false,
-            data: {
-              ...reservationPage.data,
-              reservations: reservation,
-            },
-          },
-        });
-        dispatch(
-          showToastWithTimeout({
-            message: `Deleted reservation.`,
-            type: 'success',
-          }) as any
-        );
-      })
-      .catch((error) => {
-        dispatch(
-          showToastWithTimeout({
-            message: 'Failed deleting reservation.',
-            type: 'error',
-          }) as any
-        );
-      });
-  };
-
-  const reservationSubmit: SubmitHandler<
-    apiReservationService.ReservationDTO
-  > = (reservationForm: apiReservationService.ReservationDTO) => {
-    (reservationFormModalRef as any)?.current?.closeReservationModal();
-
-    dispatchReservations({
-      type: ReservationActionsTypes.ReservationUpdateInit,
-      payload: reservationPage,
+  const createReservation = () => {
+    setIsSidePanelVisible(true);
+    reset({
+      firstName: null,
+      lastName: null,
+      email: null,
+      roomNumber: null,
+      checkInDate: null,
+      checkOutDate: null,
     });
+  };
 
-    if (reservationForm.id) {
-      editReservation(reservationForm);
+  const editReservation = (reservation: IReservation) => {
+    setIsSidePanelVisible(true);
+
+    reset({
+      firstName: reservation.guest.firstName,
+      lastName: reservation.guest.lastName,
+      email: reservation.guest.email,
+      roomNumber: reservation.room.number,
+      checkInDate: reservation.checkInDate,
+      checkOutDate: reservation.checkOutDate,
+      id: reservation.id,
+    });
+  };
+
+  const onCloseSidePanel = () => setIsSidePanelVisible(false);
+
+  const onConfirmSidePanel = (reservationFormData: ReservationFormData) => {
+    if (!reservationFormData) {
       return;
     }
 
-    createReservation(reservationForm);
+    if (reservationFormData.id) {
+      apiReservationService
+        .updateReservation(reservationFormData.id, reservationFormData)
+        .then(({ data }) => {
+          reservationsPageDispatch({
+            type: ReservationsPageActionTypes.updateReservationsListView,
+            payload: {
+              reservations: {
+                ...reservationsPageState.reservations,
+                items: reservationsPageState.reservations.items.map((reservation: IReservation) => {
+                  if (reservation.id === reservationFormData.id) {
+                    return {
+                      ...reservation,
+                      guest: {
+                        ...reservation.guest,
+                        firstName: reservationFormData.firstName,
+                        lastName: reservationFormData.lastName,
+                        email: reservationFormData.email,
+                      },
+                      room: {
+                        ...reservation.room,
+                        number: reservationFormData.roomNumber
+                      }
+                    } as IReservation;
+                  }
+
+                  return reservation;
+                }),
+              },
+            },
+          });
+        })
+        .catch((error) => {
+          dispatch(
+            showToastWithTimeout({
+              message: 'Failed editing room.',
+              type: 'error',
+            }) as any
+          );
+        });
+    } else {
+      apiReservationService
+        .createReservation(reservationFormData)
+        .then(({ data }) => {
+          dispatch(
+            showToastWithTimeout({
+              message: `Created reservation.`,
+              type: 'success',
+            }) as any
+          );
+        })
+        .catch((error) => {
+          dispatch(
+            showToastWithTimeout({
+              message: 'Failed creating a room.',
+              type: 'error',
+            }) as any
+          );
+        });
+    }
+
+    setIsSidePanelVisible(false);
   };
 
-  const goToNextPage = () => {
-    getReservations({ page: reservationPage.data.pagination.currentPage + 1 });
+  const cancelReservation = (reservation: IReservation) => {
+    apiReservationService
+      .deleteReservation(reservation.id as string)
+      .then(() => {
+        reservationsPageDispatch({
+          type: ReservationsPageActionTypes.updateReservationsListView,
+          payload: {
+            reservations: {
+              ...reservationsPageState.reservations,
+              items: reservationsPageState.reservations.items.filter(
+                (reservationItem) => reservationItem.id !== reservation.id
+              ),
+            },
+          },
+        });
+
+        dispatch(
+          showToastWithTimeout({
+            message: `Canceled reservation`,
+            type: 'success',
+          }) as any
+        );
+      })
+      .catch(() => {
+        dispatch(
+          showToastWithTimeout({
+            message: 'Failed deleting room.',
+            type: 'error',
+          }) as any
+        );
+      });
   };
 
-  const goToPreviousPage = () => {
-    getReservations({ page: reservationPage.data.pagination.currentPage - 1 });
+  const fetchReservationData = () => {
+    apiReservationService
+      .getReservations(reservationDataQueryParams)
+      .then(({ data }) => {
+        reservationsPageDispatch({
+          type: ReservationsPageActionTypes.updateReservationsListView,
+          payload: {
+            reservations: {
+              ...reservationsPageState.reservations,
+              items: data.items,
+              meta: data.meta,
+            },
+          },
+        });
+      })
+      .catch((error) => {
+        dispatch(
+          showToastWithTimeout({
+            message: 'Failed getting reservation data.',
+            type: 'error',
+          }) as any
+        );
+      });
   };
 
-  const sortColumn = (column: string, direction: 'asc' | 'desc') => {
-    getReservations({ sortColumn: column, sortDirection: direction });
-  };
-
-  const mapReservationsToTableViewItems = useMemo(() => {
-    return (reservations: IReservation[]): ReservationTableItem[] => {
-      return reservations.map((reservation) => ({
-        id: reservation.id,
-        checkInDate: reservation.checkInDate,
-        checkOutDate: reservation.checkOutDate,
-        guestFirstName: reservation.guest.firstName,
-        guestLastName: reservation.guest.lastName,
-        guestEmail: reservation.guest.email,
-        roomNumber: reservation.room.number,
-      }));
+  const goToPageHandler = (currentPage: number) => {
+    reservationDataQueryParams = {
+      ...reservationDataQueryParams,
+      page: currentPage,
     };
-  }, []);
+
+    fetchReservationData();
+  };
+
+  const sortColumnHandler = (column: string, direction: 'asc' | 'desc') => {
+    reservationDataQueryParams = {
+      ...reservationDataQueryParams,
+      sortColumn: column,
+      sortDirection: direction,
+    };
+
+    fetchReservationData();
+  };
+
+  const searchItemsHandler = (search: string) => {
+    reservationDataQueryParams = {
+      ...reservationDataQueryParams,
+      search,
+    };
+
+    fetchReservationData();
+  };
 
   useEffect(() => {
-    getInitialReservationLoadData();
+    if (formState.isSubmitSuccessful) {
+      reset();
+    }
+  }, [formState]);
+
+  useEffect(() => {
+    if (!hotel) {
+      return;
+    }
+
+    Promise.all([
+      apiReservationService.getReservations(reservationDataQueryParams),
+      apiRoomService.getRooms({hotel: hotel?.id ?? '', limit: 1000}),
+    ])
+      .then(([reservationsDataResponse, roomsDataResponse]) => {
+        reservationsPageDispatch({
+          type: ReservationsPageActionTypes.pageLoad,
+          payload: {
+            rooms: roomsDataResponse.data.items,
+            reservations: reservationsDataResponse.data,
+          } as ReservationsPageState,
+        });
+      })
+      .catch((error) => {
+        dispatch(
+          showToastWithTimeout({
+            message: 'Failed getting page data.',
+            type: 'error',
+          }) as any
+        );
+      });
   }, []);
 
   return (
-    <Fragment>
-      <section className={styles.reservations}>
-        <section className={styles.header}>
-          <h1 className={styles.title}>Reservations</h1>
-          <div className="flex flex-row pt-2 gap-3 justify-end items-center">
-            <div className="flex-1 h-full">
-              <Search onSearch={searchReservations}></Search>
-            </div>
-            <button
-              className="buttonPrimary"
-              onClick={createReservationClickHandler}
-            >
-              Create Reservation
-            </button>
+    <>
+      <ListView
+        entityName="Reservations"
+        config={tableConfig}
+        isLoading={reservationsPageState.isLoading}
+        data={reservationsPageState.reservations}
+        goToPageHandler={goToPageHandler}
+        sortColumnHandler={sortColumnHandler}
+        searchItemsHandler={searchItemsHandler}
+        createItemHandler={createReservation}
+      ></ListView>
+      <SidePanel
+        isVisible={isSidePanelVisible}
+        header="Create Reservation"
+        onClose={onCloseSidePanel}
+        onConfirm={handleSubmit(onConfirmSidePanel)}
+      >
+        <form className="flex flex-col gap-4">
+          <div className="flex flex-row gap-2 w-full">
+            <input
+              className={`formInput w-full ${
+                formState.errors.firstName ? 'error' : ''
+              }`}
+              type="text"
+              placeholder="First Name *"
+              {...register('firstName', { required: true })}
+            />
+            <input
+              className={`formInput w-full ${
+                formState.errors.lastName ? 'error' : ''
+              }`}
+              type="text"
+              placeholder="Last Name *"
+              {...register('lastName', { required: true })}
+            />
           </div>
-        </section>
-        <section className={styles.tableContainer}>
-          <Table
-            items={reservations as ReservationTableItem[]}
-            idKey="id"
-            columns={RESERVATION_COLUMNS}
-            itemActions={reservationTableActions}
-            isLoading={loading}
-            pagination={{
-              ...pagination,
-              goToNextPage,
-              goToPreviousPage,
+          <input
+            className={`formInput ${formState.errors.email ? 'error' : ''}`}
+            type="text"
+            placeholder="Email *"
+            {...register('email', {
+              required: true,
+              pattern: /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/g,
+            })}
+          />
+          <select
+            className={`formInput ${
+              formState.errors.roomNumber ? 'error' : ''
+            }`}
+            {...register('roomNumber', { required: true })}
+          >
+            <option disabled>Room Number *</option>
+            {reservationsPageState.rooms.map((room) => (
+              <option key={room.id} value={room.number}>
+                {room.number}
+              </option>
+            ))}
+          </select>
+          <label>Check In Date</label>
+          <input
+            className={`formInput ${
+              formState.errors.checkInDate ? 'error' : ''
+            }`}
+            type="date"
+            min={today}
+            {...register('checkInDate', {
+              required: true,
+              min: today,
+              disabled: getValues('id') ? true : false,
+            })}
+            aria-invalid={formState.errors.checkInDate ? 'true' : 'false'}
+            onInput={() => {
+              trigger('checkOutDate');
             }}
-            sorting={{
-              ...sorting,
-              sortColumn,
-            }}
-          ></Table>
-        </section>
-      </section>
-      <ReservationFormModal
-        ref={reservationFormModalRef}
-        rooms={rooms}
-        reservationSubmit={reservationSubmit}
-      ></ReservationFormModal>
-    </Fragment>
+          />
+          <label>Check Out Date</label>
+          <input
+            className={`formInput ${
+              formState.errors.checkOutDate ? 'error' : ''
+            }`}
+            type="date"
+            min={getValues('checkInDate') ?? today}
+            {...register('checkOutDate', {
+              required: true,
+              min: getValues('checkInDate') ?? today,
+            })}
+          />
+          <input type="hidden" {...register('id')} />
+        </form>
+      </SidePanel>
+    </>
   );
 }

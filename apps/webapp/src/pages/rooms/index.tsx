@@ -13,7 +13,6 @@ import {
 } from '@hotel-spell/api-interfaces';
 import {
   ItemAction,
-  ListViewItem,
   ListViewTableColumn,
 } from '../../components/list-view/types';
 import ListView from '../../components/list-view/ListView';

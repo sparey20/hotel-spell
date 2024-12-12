@@ -1,11 +1,7 @@
-import React, { useEffect, useReducer, useRef, useState } from 'react';
-import axios, { AxiosPromise, AxiosResponse } from 'axios';
+import React, { useState } from 'react';
 import Table from '../table/Table';
 import Search from '../search/Search';
-import { showToastWithTimeout } from '../../lib/features/toast/toastSlice';
-import { useAppDispatch } from '../../lib/hooks';
 import styles from './ListView.module.scss';
-import { LIST_VIEW_REDUCER } from './constants';
 import {
   ItemAction,
   ListViewTableColumn,
