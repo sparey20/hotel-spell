@@ -32,12 +32,26 @@ export class ReservationController {
     });
   }
 
+  @Get('checking-in-by-day')
+  checkingInByDay(
+    @Query('hotel') hotelId: string,
+    @Query('date', new DefaultValuePipe(null)) date: string
+  ) {
+    return this.reservationService.getCheckingInReservations(hotelId, date);
+  }
+
+  @Get('checking-out-by-day')
+  checkingOutByDay(
+    @Query('hotel') hotelId: string,
+    @Query('date', new DefaultValuePipe(null)) date: string
+  ) {
+    return this.reservationService.getCheckingOutReservations(hotelId, date);
+  }
+
   @Get()
   findAll(
     @Query('hotel') hotelId: string,
-    @Query('checkInDate', new DefaultValuePipe(null)) checkInDate: string,
-    @Query('checkOutDate', new DefaultValuePipe(null)) checkOutDate: string,
-    @Query('isActive', new DefaultValuePipe(false)) isActive: boolean,
+    @Query('date', new DefaultValuePipe(null)) date: string,
     @Query('search', new DefaultValuePipe('')) search: string,
     @Query('room', new DefaultValuePipe(null)) room: number,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
@@ -47,9 +61,7 @@ export class ReservationController {
   ) {
     return this.reservationService.findAll({
       hotelId,
-      checkInDate,
-      checkOutDate,
-      isActive,
+      date,
       search,
       room,
       page,

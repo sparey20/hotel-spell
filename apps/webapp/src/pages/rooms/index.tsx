@@ -16,7 +16,7 @@ import {
   ListViewTableColumn,
 } from '../../components/list-view/types';
 import ListView from '../../components/list-view/ListView';
-import SidePanel from '../../components/list-view/SidePanel';
+import SidePanel from '../../components/side-panel/SidePanel';
 import { set, useForm } from 'react-hook-form';
 import { GetRoomsParams } from '../../lib/features/room/apiRoomService';
 import { showToastWithTimeout } from '../../lib/features/toast/toastSlice';

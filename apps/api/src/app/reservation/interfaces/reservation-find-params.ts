@@ -16,15 +16,7 @@ export class ReservationFindParams {
 
   @IsDateString()
   @IsOptional()
-  checkInDate?: string = '';
-
-  @IsDateString()
-  @IsOptional()
-  checkOutDate?: string = '';
-
-  @IsBoolean()
-  @IsOptional()
-  isActive?: boolean = false;
+  date?: string = '';
 
   @IsString()
   @IsOptional()

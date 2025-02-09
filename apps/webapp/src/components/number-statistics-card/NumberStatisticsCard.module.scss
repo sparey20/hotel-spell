@@ -1,12 +1,15 @@
 .numberStatisticsCard {
   @apply flex;
   @apply flex-col;
-  @apply items-center;
-  @apply p-3;
+  @apply items-start;
+  @apply justify-start;
+  @apply p-6;
   @apply rounded-lg;
   @apply bg-white;
   @apply w-36;
+  @apply gap-4;
   @apply shadow;
+  @apply w-full;
 
   .title {
     @apply text-sm;

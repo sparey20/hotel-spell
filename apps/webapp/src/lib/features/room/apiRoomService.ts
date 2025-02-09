@@ -18,10 +18,34 @@ export type GetRoomsParams = {
   page?: number;
 };
 
+export type getAvailableRoomsParams = {
+  hotel: string;
+  startDate: string,
+  endDate: string,
+  roomTypeId: string;
+}
+
+export type getOccupancyParams = {
+  hotel: string;
+  date: string,
+}
+
 export const getRooms = (
   params: GetRoomsParams
 ): Promise<AxiosResponse<IAPIListView<IRoom>>> => {
   return axios.get(apiRoomsPrefix, { params });
+};
+
+export const getAvailableRooms = (
+  params: getAvailableRoomsParams
+): Promise<AxiosResponse<IRoom[]>> => {
+  return axios.get(`${apiRoomsPrefix}/availableRooms`, { params });
+};
+
+export const getOccupancy = (
+  params: getOccupancyParams
+): Promise<AxiosResponse<{occupancy: string}>> => {
+  return axios.get(`${apiRoomsPrefix}/occupancy`, { params });
 };
 
 export const createRoom = (

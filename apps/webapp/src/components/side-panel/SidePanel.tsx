@@ -8,16 +8,19 @@ type SidePanelProps = {
   onClose?: () => void;
   onConfirm?: () => void;
   children?: string | JSX.Element | JSX.Element[];
+  width?: number;
 };
 
 export default function SidePanel({
-  header,
   onClose,
-  onConfirm,
   children,
   isVisible,
+  width,
 }: SidePanelProps) {
   const [isActive, setIsActive] = useState(false);
+  const customStyle = {
+    width: `${width ?? 600}px`
+  };
 
   useEffect(() => {
     if (isVisible) {
@@ -37,29 +40,10 @@ export default function SidePanel({
         >
           <section
             className={styles.content}
+            style={customStyle}
             onClick={(event) => event.stopPropagation()}
           >
-            <header className={styles.header}>
-              <h3>{header}</h3>
-              <button className="buttonIcon" onClick={onClose}>
-                <IoCloseOutline className="text-xl" />
-              </button>
-            </header>
-            <section className={styles.body}>{children}</section>
-            <footer className={styles.footer}>
-              <button
-                className="buttonDefault flex justify-center items-center flex-1"
-                onClick={onClose}
-              >
-                Cancel
-              </button>
-              <button
-                className="buttonPrimary flex justify-center items-center flex-1"
-                onClick={onConfirm}
-              >
-                Confirm
-              </button>
-            </footer>
+            {children}
           </section>
         </section>
       </section>

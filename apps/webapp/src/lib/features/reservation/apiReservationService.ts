@@ -9,7 +9,7 @@ export type GetReservationParams = {
   sortDirection?: 'asc' | 'desc';
   search?: string;
   page?: number;
-  isActive?: boolean;
+  date?: string;
 };
 
 export type ReservationDTO = {
@@ -25,6 +25,11 @@ export type GetReservationByDayParams = {
   hotel: string;
   startDate: string;
   endDate: string;
+};
+
+export type GetCheckingByDayParams = {
+  hotel: string;
+  date: string;
 };
 
 const reservationApiPrefix = `${BASE_API_PATH}/api/reservations`;
@@ -50,4 +55,12 @@ export const deleteReservation = (id: string) => {
 
 export const getReservationsByDay = (params: GetReservationByDayParams) => {
   return axios.get(`${reservationApiPrefix}/by-day`, { params });
+};
+
+export const getCheckingIn = (params: GetCheckingByDayParams) => {
+  return axios.get(`${reservationApiPrefix}/checking-in-by-day`, { params });
+};
+
+export const getCheckingOut = (params: GetCheckingByDayParams) => {
+  return axios.get(`${reservationApiPrefix}/checking-out-by-day`, { params });
 };

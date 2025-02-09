@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+  Between,
   EntityManager,
   ILike,
   LessThan,
@@ -29,6 +30,7 @@ import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { ReservationFindParams } from './interfaces/reservation-find-params';
 import { Pagination, paginate } from 'nestjs-typeorm-paginate';
 import { ExceptionsHandler } from '@nestjs/core/exceptions/exceptions-handler';
+import { IReservation } from '@hotel-spell/api-interfaces';
 
 @Injectable()
 export class ReservationService {
@@ -60,14 +62,13 @@ export class ReservationService {
   ): Promise<Pagination<Reservation>> {
     const {
       hotelId,
-      isActive,
       search,
+      date,
       room,
       sortColumn,
       sortDirection,
       ...paginationOptions
     } = reservationParams;
-    const today = format(new Date(), 'P');
 
     if (!hotelId) {
       throw new BadRequestException('No hotel provided');
@@ -81,11 +82,11 @@ export class ReservationService {
               id: hotelId,
             },
           },
-          ...(!isActive ? {} : { checkInDate: LessThanOrEqual(today) }),
-          ...(!isActive
+          ...(!date ? {} : { checkInDate: LessThanOrEqual(date) }),
+          ...(!date
             ? {}
             : {
-                checkOutDate: MoreThanOrEqual(today),
+                checkOutDate: MoreThanOrEqual(date),
               }),
           ...(search
             ? {
@@ -109,7 +110,9 @@ export class ReservationService {
           updatedDate: 'DESC',
         },
         relations: {
-          room: true,
+          room: {
+            roomType: true,
+          },
           guest: true,
         },
       });
@@ -268,5 +271,49 @@ export class ReservationService {
     }
 
     return result;
+  }
+
+  async getCheckingInReservations(hotelId: string, date: string): Promise<IReservation[]> {
+    const reservations = await this.reservationRepository.find({
+      where: {
+        room: {
+          hotel: {
+            id: hotelId,
+          },
+        },
+        checkInDate: date
+      },
+      relations: {
+        guest: true,
+        room: {
+          hotel: true,
+          roomType: true,
+        },
+      },
+    });
+
+    return reservations
+  }
+
+  async getCheckingOutReservations(hotelId: string, date: string): Promise<IReservation[]> {
+    const reservations = await this.reservationRepository.find({
+      where: {
+        room: {
+          hotel: {
+            id: hotelId,
+          },
+        },
+        checkOutDate: date
+      },
+      relations: {
+        guest: true,
+        room: {
+          hotel: true,
+          roomType: true,
+        },
+      },
+    });
+
+    return reservations
   }
 }

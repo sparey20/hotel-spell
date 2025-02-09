@@ -26,8 +26,8 @@
     @apply p-3;
     @apply rounded-lg;
     @apply bg-white;
-    @apply w-36;
     @apply shadow;
+    @apply col-span-2;
 
     .title {
       @apply text-sm;

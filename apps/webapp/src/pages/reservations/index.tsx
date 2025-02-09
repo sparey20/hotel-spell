@@ -1,5 +1,5 @@
 import styles from './index.module.scss';
-import * as apiRoomService from '../../lib/features/room/apiRoomService';
+import * as apiRoomTypeService from '../../lib/features/roomType/apiRoomTypeService';
 import { useEffect, useReducer, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../lib/hooks';
 import {
@@ -7,47 +7,65 @@ import {
   IHotel,
   IReservation,
   IRoom,
+  IRoomType,
 } from '@hotel-spell/api-interfaces';
 import {
   ItemAction,
-  ListViewTableColumn,
 } from '../../components/list-view/types';
-import ListView from '../../components/list-view/ListView';
-import SidePanel from '../../components/list-view/SidePanel';
+import SidePanel from '../../components/side-panel/SidePanel';
 import { useForm } from 'react-hook-form';
 import { showToastWithTimeout } from '../../lib/features/toast/toastSlice';
 import * as apiReservationService from '../../lib/features/reservation/apiReservationService';
-import { format } from 'date-fns';
+import { addDays, differenceInDays, format, isWithinInterval } from 'date-fns';
+import Table, { TableColumn } from '../../components/table/Table';
+import { LuBookPlus } from 'react-icons/lu';
+import DaySelectionFrame from '../../components/day-selection-frame/DaySelectionFrame';
+import ReservationForm from './ReservationForm';
+import SidePanelHeader from '../../components/side-panel/SidePanelHeader';
+import SidePanelBody from '../../components/side-panel/SidePanelBody';
+import { IoChevronDown } from 'react-icons/io5';
+import { Datepicker, Popover } from 'flowbite-react';
 
 interface ReservationsPageState {
   reservations: IAPIListView<IReservation>;
   isLoading: boolean;
-  rooms: IRoom[];
+  roomTypes: IRoomType[];
+  selectedDay: Date;
 }
 
 enum ReservationsPageActionTypes {
   pageLoad = 'PAGE_LOAD',
   updateReservationsListView = 'UPDATE_RESERVATIONS_LIST_VIEW',
+  updateDaySelection = 'UPDATE_DAY_SELECTION',
 }
 
-interface ReservationFormData {
+export interface ReservationFormData {
   firstName: string | null;
   lastName: string | null;
   email: string | null;
-  roomNumber: number | null;
+  room: IRoom | null;
   checkInDate: string | null;
-  checkOutDate: string | null;
+  duration: number | null;
+  roomTypeId: string | null;
+  phone: string | null;
   id?: string;
 }
 
 type ReservationsPageAction =
   | {
       type: ReservationsPageActionTypes.pageLoad;
-      payload: { reservations: IAPIListView<IReservation>; rooms: IRoom[] };
+      payload: {
+        reservations: IAPIListView<IReservation>;
+        roomTypes: IRoomType[];
+      };
     }
   | {
       type: ReservationsPageActionTypes.updateReservationsListView;
       payload: { reservations: IAPIListView<IReservation> };
+    }
+  | {
+      type: ReservationsPageActionTypes.updateDaySelection;
+      payload: { selectedDay: Date };
     };
 
 const roomsPageReducerMap = new Map<
@@ -65,8 +83,9 @@ const roomsPageReducerMap = new Map<
     ): ReservationsPageState =>
       action.type === ReservationsPageActionTypes.pageLoad
         ? {
+            ...state,
             reservations: action.payload.reservations,
-            rooms: action.payload.rooms,
+            roomTypes: action.payload.roomTypes,
             isLoading: false,
           }
         : state,
@@ -79,6 +98,16 @@ const roomsPageReducerMap = new Map<
             ...state,
             reservations: action.payload.reservations,
             isLoading: false,
+          }
+        : state,
+  ],
+  [
+    ReservationsPageActionTypes.updateDaySelection,
+    (state: ReservationsPageState, action: ReservationsPageAction) =>
+      action.type === ReservationsPageActionTypes.updateDaySelection
+        ? {
+            ...state,
+            selectedDay: action.payload.selectedDay,
           }
         : state,
   ],
@@ -111,14 +140,17 @@ const initialPageState: ReservationsPageState = {
     },
   },
   isLoading: true,
-  rooms: [],
+  roomTypes: [],
+  selectedDay: new Date(),
 };
 
 export default function ReservationsComponent() {
-  const today = format(new Date(), 'yyyy-MM-dd');
   const { hotel } = useAppSelector((state) => state.hotel) as {
     hotel: IHotel | null;
   };
+
+  const [isDateSelectionVisible, setIsDateSelectionVisible] =
+    useState<boolean>(false);
 
   let reservationDataQueryParams: apiReservationService.GetReservationParams = {
     hotel: hotel?.id as string,
@@ -127,28 +159,37 @@ export default function ReservationsComponent() {
     sortDirection: 'desc',
     limit: listViewItemPerPage,
     search: '',
+    date: format(initialPageState.selectedDay, 'P'),
   };
 
   const dispatch = useAppDispatch();
-
   const [reservationsPageState, reservationsPageDispatch] = useReducer(
     reservationsPageReducer,
     initialPageState
   );
-
   const [isSidePanelVisible, setIsSidePanelVisible] = useState(false);
-  const { register, handleSubmit, reset, getValues, trigger, formState } =
-    useForm<ReservationFormData>({
-      mode: 'onBlur',
-      defaultValues: {
-        firstName: null,
-        lastName: null,
-        email: null,
-        roomNumber: null,
-        checkInDate: null,
-        checkOutDate: null,
-      },
-    });
+  const {
+    register,
+    handleSubmit,
+    reset,
+    getValues,
+    control,
+    watch,
+    formState,
+    setValue,
+  } = useForm<ReservationFormData>({
+    mode: 'onBlur',
+    defaultValues: {
+      firstName: null,
+      lastName: null,
+      email: null,
+      room: null,
+      checkInDate: format(initialPageState.selectedDay, 'P'),
+      roomTypeId: null,
+      phone: null,
+      duration: 1,
+    },
+  });
 
   const tableConfig = {
     columns: [
@@ -157,25 +198,29 @@ export default function ReservationsComponent() {
         label: 'First Name',
         key: 'guestFirstName',
         size: 2,
-        transform: (reservation: IReservation) => reservation.guest.firstName
+        transform: (reservation: IReservation) => reservation.guest.firstName,
       },
       {
         sortable: false,
         label: 'Last Name',
         key: 'guestLastName',
         size: 2,
-        transform: (reservation: IReservation) => reservation.guest.lastName
+        transform: (reservation: IReservation) => reservation.guest.lastName,
       },
       {
         sortable: true,
         label: 'Check In',
         key: 'checkInDate',
+        transform: (reservation: IReservation) =>
+          format(reservation.checkInDate, 'PP'),
         size: 2,
       },
       {
         sortable: true,
         label: 'Check Out',
         key: 'checkOutDate',
+        transform: (reservation: IReservation) =>
+          format(reservation.checkOutDate, 'PP'),
         size: 2,
       },
       {
@@ -183,9 +228,10 @@ export default function ReservationsComponent() {
         label: 'Room',
         key: 'roomNumber',
         size: 2,
-        transform: (reservation: IReservation) => reservation.room.number
+        transform: (reservation: IReservation) =>
+          String(reservation.room.number),
       },
-    ] as ListViewTableColumn[],
+    ] as TableColumn[],
     itemActions: [
       {
         label: 'Edit',
@@ -200,13 +246,15 @@ export default function ReservationsComponent() {
 
   const createReservation = () => {
     setIsSidePanelVisible(true);
+
     reset({
       firstName: null,
       lastName: null,
       email: null,
-      roomNumber: null,
-      checkInDate: null,
-      checkOutDate: null,
+      room: null,
+      checkInDate: format(reservationsPageState.selectedDay, 'PP'),
+      duration: 1,
+      roomTypeId: reservationsPageState.roomTypes[0].id,
     });
   };
 
@@ -217,9 +265,15 @@ export default function ReservationsComponent() {
       firstName: reservation.guest.firstName,
       lastName: reservation.guest.lastName,
       email: reservation.guest.email,
-      roomNumber: reservation.room.number,
+      room: reservation.room,
+      roomTypeId: reservation.room.roomType.id,
       checkInDate: reservation.checkInDate,
-      checkOutDate: reservation.checkOutDate,
+      duration: Math.abs(
+        differenceInDays(
+          new Date(reservation.checkInDate),
+          new Date(reservation.checkOutDate)
+        )
+      ),
       id: reservation.id,
     });
   };
@@ -231,34 +285,52 @@ export default function ReservationsComponent() {
       return;
     }
 
+    const { firstName, lastName, email, room, checkInDate, duration } =
+      reservationFormData;
+
     if (reservationFormData.id) {
       apiReservationService
-        .updateReservation(reservationFormData.id, reservationFormData)
+        .updateReservation(reservationFormData.id, {
+          firstName,
+          lastName,
+          email,
+          roomNumber: room?.number ?? null,
+          checkInDate,
+          checkOutDate: format(
+            addDays(
+              checkInDate ? new Date(checkInDate) : new Date(),
+              Number(duration)
+            ),
+            'P'
+          ),
+        })
         .then(({ data }) => {
           reservationsPageDispatch({
             type: ReservationsPageActionTypes.updateReservationsListView,
             payload: {
               reservations: {
                 ...reservationsPageState.reservations,
-                items: reservationsPageState.reservations.items.map((reservation: IReservation) => {
-                  if (reservation.id === reservationFormData.id) {
-                    return {
-                      ...reservation,
-                      guest: {
-                        ...reservation.guest,
-                        firstName: reservationFormData.firstName,
-                        lastName: reservationFormData.lastName,
-                        email: reservationFormData.email,
-                      },
-                      room: {
-                        ...reservation.room,
-                        number: reservationFormData.roomNumber
-                      }
-                    } as IReservation;
-                  }
+                items: reservationsPageState.reservations.items.map(
+                  (reservation: IReservation) => {
+                    if (reservation.id === reservationFormData.id) {
+                      return {
+                        ...reservation,
+                        guest: {
+                          ...reservation.guest,
+                          firstName,
+                          lastName,
+                          email,
+                        },
+                        room: {
+                          ...reservation.room,
+                          number: room?.number,
+                        },
+                      } as IReservation;
+                    }
 
-                  return reservation;
-                }),
+                    return reservation;
+                  }
+                ),
               },
             },
           });
@@ -273,8 +345,43 @@ export default function ReservationsComponent() {
         });
     } else {
       apiReservationService
-        .createReservation(reservationFormData)
-        .then(({ data }) => {
+        .createReservation({
+          firstName,
+          lastName,
+          email,
+          roomNumber: room?.number ?? null,
+          checkInDate,
+          checkOutDate: format(
+            addDays(
+              checkInDate ? new Date(checkInDate) : new Date(),
+              Number(duration)
+            ),
+            'P'
+          ),
+        })
+        .then(({ data }: { data: IReservation }) => {
+          if (
+            isWithinInterval(reservationsPageState.selectedDay, {
+              start: data.checkInDate,
+              end: data.checkOutDate,
+            })
+          ) {
+            reservationsPageDispatch({
+              type: ReservationsPageActionTypes.updateReservationsListView,
+              payload: {
+                reservations: {
+                  ...reservationsPageState.reservations,
+                  items: [...reservationsPageState.reservations.items, data],
+                  meta: {
+                    ...reservationsPageState.reservations.meta,
+                    totalItems:
+                      reservationsPageState.reservations.meta.totalItems + 1,
+                  },
+                },
+              },
+            });
+          }
+
           dispatch(
             showToastWithTimeout({
               message: `Created reservation.`,
@@ -285,7 +392,7 @@ export default function ReservationsComponent() {
         .catch((error) => {
           dispatch(
             showToastWithTimeout({
-              message: 'Failed creating a room.',
+              message: 'Failed booking reservation.',
               type: 'error',
             }) as any
           );
@@ -362,23 +469,37 @@ export default function ReservationsComponent() {
     fetchReservationData();
   };
 
-  const sortColumnHandler = (column: string, direction: 'asc' | 'desc') => {
+  const goToNextPage = () => {
+    goToPageHandler(reservationsPageState.reservations.meta.currentPage + 1);
+  };
+
+  const goToPreviousPage = () => {
+    goToPageHandler(reservationsPageState.reservations.meta.currentPage - 1);
+  };
+
+  const selectDayHandler = (day: Date) => {
     reservationDataQueryParams = {
       ...reservationDataQueryParams,
-      sortColumn: column,
-      sortDirection: direction,
+      date: format(day, 'P'),
     };
+
+    reservationsPageDispatch({
+      type: ReservationsPageActionTypes.updateDaySelection,
+      payload: {
+        selectedDay: day,
+      },
+    });
 
     fetchReservationData();
   };
 
-  const searchItemsHandler = (search: string) => {
-    reservationDataQueryParams = {
-      ...reservationDataQueryParams,
-      search,
-    };
+  const toggleDateSelectionPicker = () => {
+    setIsDateSelectionVisible(!isDateSelectionVisible);
+  };
 
-    fetchReservationData();
+  const updateDaySelectionRange = (selectedDay: Date) => {
+    setIsDateSelectionVisible(false);
+    selectDayHandler(selectedDay);
   };
 
   useEffect(() => {
@@ -394,13 +515,13 @@ export default function ReservationsComponent() {
 
     Promise.all([
       apiReservationService.getReservations(reservationDataQueryParams),
-      apiRoomService.getRooms({hotel: hotel?.id ?? '', limit: 1000}),
+      apiRoomTypeService.getRoomTypes({ hotel: hotel?.id ?? '' }),
     ])
-      .then(([reservationsDataResponse, roomsDataResponse]) => {
+      .then(([reservationsDataResponse, roomTypesDataResponse]) => {
         reservationsPageDispatch({
           type: ReservationsPageActionTypes.pageLoad,
           payload: {
-            rooms: roomsDataResponse.data.items,
+            roomTypes: roomTypesDataResponse.data,
             reservations: reservationsDataResponse.data,
           } as ReservationsPageState,
         });
@@ -416,96 +537,85 @@ export default function ReservationsComponent() {
   }, []);
 
   return (
-    <>
-      <ListView
-        entityName="Reservations"
-        config={tableConfig}
-        isLoading={reservationsPageState.isLoading}
-        data={reservationsPageState.reservations}
-        goToPageHandler={goToPageHandler}
-        sortColumnHandler={sortColumnHandler}
-        searchItemsHandler={searchItemsHandler}
-        createItemHandler={createReservation}
-      ></ListView>
+    <section className={styles.reservations}>
+      <section className={styles.main}>
+        <div className="flex flex-row justify-between">
+          <div className="flex flex-row gap-3 items-center">
+            <Popover
+              open={isDateSelectionVisible}
+              content={
+                <Datepicker
+                  defaultDate={reservationsPageState.selectedDay}
+                  inline
+                  showClearButton={false}
+                  onSelectedDateChanged={updateDaySelectionRange}
+                />
+              }
+            >
+              <button
+                type="button"
+                className="flex flex-row gap-3 items-center"
+                onClick={toggleDateSelectionPicker}
+              >
+                <h1 className={styles.reservationSelectedDateTitle}>
+                  {format(reservationsPageState.selectedDay, 'PP')}
+                </h1>
+                <IoChevronDown></IoChevronDown>
+              </button>
+            </Popover>
+          </div>
+          <div className="flex flex-row mb-3">
+            <button
+              className="buttonPrimary w-56 flex flex-row gap-3 justify-center items-center"
+              onClick={createReservation}
+            >
+              <span>Create Reservation</span>
+              <span>
+                <LuBookPlus />
+              </span>
+            </button>
+          </div>
+        </div>
+        <DaySelectionFrame
+          initialSelectedDay={reservationsPageState.selectedDay}
+          onSelectDayHandler={selectDayHandler}
+        ></DaySelectionFrame>
+        <Table
+          items={reservationsPageState.reservations.items}
+          idKey="id"
+          columns={tableConfig.columns}
+          itemActions={tableConfig.itemActions}
+          isLoading={reservationsPageState.isLoading}
+          pagination={{
+            ...reservationsPageState.reservations.meta,
+            goToNextPage,
+            goToPreviousPage,
+          }}
+        ></Table>
+      </section>
       <SidePanel
         isVisible={isSidePanelVisible}
-        header="Create Reservation"
         onClose={onCloseSidePanel}
-        onConfirm={handleSubmit(onConfirmSidePanel)}
+        width={800}
       >
-        <form className="flex flex-col gap-4">
-          <div className="flex flex-row gap-2 w-full">
-            <input
-              className={`formInput w-full ${
-                formState.errors.firstName ? 'error' : ''
-              }`}
-              type="text"
-              placeholder="First Name *"
-              {...register('firstName', { required: true })}
-            />
-            <input
-              className={`formInput w-full ${
-                formState.errors.lastName ? 'error' : ''
-              }`}
-              type="text"
-              placeholder="Last Name *"
-              {...register('lastName', { required: true })}
-            />
-          </div>
-          <input
-            className={`formInput ${formState.errors.email ? 'error' : ''}`}
-            type="text"
-            placeholder="Email *"
-            {...register('email', {
-              required: true,
-              pattern: /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/g,
-            })}
-          />
-          <select
-            className={`formInput ${
-              formState.errors.roomNumber ? 'error' : ''
-            }`}
-            {...register('roomNumber', { required: true })}
-          >
-            <option disabled>Room Number *</option>
-            {reservationsPageState.rooms.map((room) => (
-              <option key={room.id} value={room.number}>
-                {room.number}
-              </option>
-            ))}
-          </select>
-          <label>Check In Date</label>
-          <input
-            className={`formInput ${
-              formState.errors.checkInDate ? 'error' : ''
-            }`}
-            type="date"
-            min={today}
-            {...register('checkInDate', {
-              required: true,
-              min: today,
-              disabled: getValues('id') ? true : false,
-            })}
-            aria-invalid={formState.errors.checkInDate ? 'true' : 'false'}
-            onInput={() => {
-              trigger('checkOutDate');
-            }}
-          />
-          <label>Check Out Date</label>
-          <input
-            className={`formInput ${
-              formState.errors.checkOutDate ? 'error' : ''
-            }`}
-            type="date"
-            min={getValues('checkInDate') ?? today}
-            {...register('checkOutDate', {
-              required: true,
-              min: getValues('checkInDate') ?? today,
-            })}
-          />
-          <input type="hidden" {...register('id')} />
-        </form>
+        <SidePanelHeader onClose={onCloseSidePanel}>
+          <div>Book a Reservation</div>
+        </SidePanelHeader>
+        <SidePanelBody>
+          <ReservationForm
+            roomTypes={reservationsPageState.roomTypes}
+            hotelId={hotel?.id ?? ''}
+            watch={watch}
+            register={register}
+            formState={formState}
+            getValues={getValues}
+            control={control}
+            setValue={setValue}
+            defaultCheckInDate={initialPageState.selectedDay}
+            handleSubmit={handleSubmit(onConfirmSidePanel)}
+          ></ReservationForm>
+        </SidePanelBody>
       </SidePanel>
-    </>
+    </section>
   );
 }

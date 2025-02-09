@@ -1,25 +1,83 @@
 .reservations {
   @apply flex;
-  @apply flex-col;
+  @apply flex-row;
   @apply flex-auto;
   @apply bg-slate-50;
+  @apply p-6;
 
-  .header {
-    @apply p-4;
-    @apply pb-0;
-
-    .title {
-      @apply text-2xl;
-      @apply font-bold;
-      @apply text-emerald-900;
-    }
-  }
-
-  .tableContainer {
+  .main {
     @apply flex;
+    @apply flex-col;
+    @apply w-full;
+    @apply rounded-md;
     @apply overflow-hidden;
-    @apply rounded-lg;
-    @apply m-4;
-    @apply shadow-md;
+
+    .reservationSelectedDateTitle {
+      @apply text-4xl;
+    }
+
+    .reservationDateRangeSelectorContainer {
+      @apply absolute;
+      @apply z-50;
+      left: 270px;
+      top: 120px;
+    }
+  }  
+
+  .reservationForm {
+    @apply h-full;
+    @apply flex;
+    @apply flex-col;
+    @apply gap-4;
+    @apply justify-between;
+  }
+}
+
+.roomListContainer {
+  @apply flex-grow;
+  @apply flex-col;
+  @apply w-full;
+  @apply justify-center;
+  @apply min-h-0;
+  height: 600px;
+
+  .roomList {
+    @apply p-3;
+    @apply overflow-auto;
+    @apply grid;
+    @apply grid-cols-3;
+    @apply gap-3;
+    @apply w-full;
+    @apply h-full;
+
+    .selected {
+      @apply outline;
+      @apply outline-4;
+      @apply rounded-xl;
+      @apply outline-emerald-700;
+      @apply text-emerald-700;
+      @apply bg-emerald-700;
+    }
+
+    &::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      @apply bg-slate-300;
+    }
+
+    &::-webkit-scrollbar-track {
+      -webkit-box-shadow: inset 0 0 6px rgba(83, 83, 83, 0.07);
+      @apply bg-slate-50;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      @apply bg-slate-300;
+    }
+
+    &.loading {
+
+    }
   }
 }

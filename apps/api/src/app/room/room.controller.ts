@@ -37,6 +37,25 @@ export class RoomController {
     });
   }
 
+  @Get('availableRooms')
+  findAvailableRooms(
+    @Query('hotel') hotelId: string,
+    @Query('startDate') startDate: string,
+    @Query('startDate') endDate: string,
+    @Query('roomTypeId') roomTypeId: string,
+  ) {
+    return this.roomService.findAvailableRooms(hotelId, startDate, endDate, roomTypeId);
+  }
+
+  @Get('occupancy')
+  getOccupancy(
+    @Query('hotel') hotelId: string,
+    @Query('date') date: string,
+  ) {
+    return this.roomService.getOccupancy(hotelId, date);
+  }
+
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.roomService.findOne(id);

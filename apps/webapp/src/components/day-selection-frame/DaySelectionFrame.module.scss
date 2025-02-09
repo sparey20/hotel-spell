@@ -1,0 +1,64 @@
+.daySelection {
+    @apply flex;
+    @apply flex-row;
+    @apply bg-white;
+    @apply p-4;
+    @apply border-b;
+    @apply justify-between;
+    @apply items-center;
+    @apply h-24;
+
+    .navigationButton {
+      @apply p-2;
+      @apply h-8;
+      @apply rounded-full;
+      @apply bg-yellow-500;
+      @apply text-white;
+
+      &:hover {
+        @apply bg-yellow-600;
+      }
+    }
+
+    .dayButton {
+      @apply p-2;
+      @apply rounded;
+      @apply border;
+      @apply text-slate-400;
+      @apply h-16;
+      @apply w-16;
+
+      transform: scale(1);
+      transition: transform 0.2s ease;
+
+      &:hover {
+        @apply bg-emerald-500;
+        @apply text-white;
+
+        .dayNumber {
+            @apply text-white;
+        }
+      }
+
+      &.selected {
+        @apply bg-emerald-600;
+        @apply text-white;
+        transform: scale(1.2);
+        
+
+        .dayNumber {
+            @apply text-white;
+        }
+      }
+
+      .weekDay {
+        @apply text-sm;
+      }
+
+      .dayNumber {
+        @apply text-xl;
+        @apply font-bold;
+        @apply text-slate-600;
+      }
+    }
+  }
